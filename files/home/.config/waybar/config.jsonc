@@ -1,0 +1,151 @@
+{
+  // ==========================================================================
+  // waybar config — niri + Catppuccin Mocha
+  // Требует: waybar (Arch extra), wireplumber, network-manager
+  // Нативные niri-модули: niri/workspaces, niri/window, niri/language
+  // ==========================================================================
+  "layer": "top",
+  "position": "top",
+  "height": 32,
+  "spacing": 4,
+  "exclusive": true,
+
+  "modules-left": [
+    "niri/workspaces",
+    "niri/window"
+  ],
+
+  "modules-center": [
+    "clock"
+  ],
+
+  "modules-right": [
+    "cpu",
+    "memory",
+    "disk",
+    "temperature",
+    "pulseaudio",
+    "network",
+    "niri/language",
+    "tray",
+    "custom/power"
+  ],
+
+  // --------------------------------------------------------------------------
+  // LEFT — workspaces & window title
+  // --------------------------------------------------------------------------
+  "niri/workspaces": {
+    "format": "{icon}",
+    "format-icons": {
+      "active":  "󰮯",
+      "default": "󰊠",
+      "empty":   "󰋙"
+    },
+    "on-click": "activate",
+    "all-outputs": false
+  },
+
+  "niri/window": {
+    "format": "  {}",
+    "max-length": 60,
+    "rewrite": {
+      // Убираем суффиксы типа " — Firefox" → просто заголовок вкладки
+      "(.*) — (.*)": "$1",
+      "(.*) - (.*)":  "$1"
+    }
+  },
+
+  // --------------------------------------------------------------------------
+  // CENTER — clock
+  // --------------------------------------------------------------------------
+  "clock": {
+    "timezone": "Europe/Moscow",
+    "format": " {:%H:%M}",
+    "format-alt": " {:%Y-%m-%d  %H:%M:%S}",
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": {
+      "mode": "month",
+      "on-scroll": 1,
+      "format": {
+        "today": "<span color='#a6e3a1'><b>{}</b></span>"
+      }
+    },
+    "interval": 1
+  },
+
+  // --------------------------------------------------------------------------
+  // RIGHT — system
+  // --------------------------------------------------------------------------
+  "cpu": {
+    "format": "󰻠 {usage}%",
+    "interval": 3,
+    "tooltip": false,
+    "on-click": "foot -e btop"
+  },
+
+  "memory": {
+    "format": "󰍛 {used:0.1f}G",
+    "format-alt": "󰍛 {percentage}%",
+    "interval": 5,
+    "tooltip-format": "Used: {used:0.2f}G / {total:0.2f}G\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G",
+    "on-click": "foot -e btop"
+  },
+
+  "disk": {
+    "format": "󰋊 {percentage_used}%",
+    "path": "/",
+    "interval": 30,
+    "tooltip-format": "{path}: {used} / {total} ({percentage_used}%)"
+  },
+
+  "temperature": {
+    // Если сенсор не определяется автоматически — задай явно:
+    // "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input",
+    "format": "󰔏 {temperatureC}°C",
+    "format-critical": "󰸁 {temperatureC}°C",
+    "critical-threshold": 80,
+    "interval": 5,
+    "tooltip": false
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "󰖁 muted",
+    "format-icons": {
+      "default": ["󰕿", "󰖀", "󰕾"]
+    },
+    "scroll-step": 5,
+    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "on-click-right": "foot -e pulsemixer",
+    "tooltip-format": "{desc} — {volume}%"
+  },
+
+  "network": {
+    "format-wifi":          "󰤨 {essid} {signalStrength}%",
+    "format-ethernet":      "󰈀 {ipaddr}",
+    "format-disconnected":  "󰤭 offline",
+    "format-linked":        "󰈀 (no IP)",
+    "tooltip-format-wifi":  "{essid}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
+    "tooltip-format-ethernet": "{ifname}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
+    "interval": 5,
+    "on-click": "foot -e nmtui"
+  },
+
+  "niri/language": {
+    "format": "󰌌 {}",
+    "format-en": "EN",
+    "format-ru": "RU"
+  },
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 6,
+    "show-passive-items": true
+  },
+
+  "custom/power": {
+    "format": "󰐥",
+    "tooltip": false,
+    "on-click": "sh -c 'niri msg action quit'"
+  }
+}

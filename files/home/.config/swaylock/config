@@ -1,0 +1,47 @@
+# =============================================================================
+# ~/.config/swaylock/config — конфигурация экранного блокировщика
+# Палитра: Catppuccin Mocha — согласована с Noctalia dark / foot
+# =============================================================================
+
+# Цвет фона (без #)
+color=111111
+
+# Шрифт
+font=JetBrainsMono Nerd Font
+font-size=13
+
+# Индикатор пароля
+indicator-radius=80
+indicator-thickness=7
+indicator-idle-visible
+
+# Кольцо индикатора
+ring-color=89b4fa        # blue — ожидание
+ring-ver-color=cba6f7    # mauve — верификация
+ring-wrong-color=f38ba8  # red — неверный пароль
+ring-clear-color=a6e3a1  # green — очистка
+
+# Заливка индикатора
+inside-color=111111cc
+inside-ver-color=111111cc
+inside-wrong-color=111111cc
+inside-clear-color=111111cc
+
+# Текст на индикаторе
+text-color=cdd6f4
+text-ver-color=cdd6f4
+text-wrong-color=f38ba8
+text-clear-color=a6e3a1
+
+# Разделитель (прозрачный — убирает белый круг)
+separator-color=00000000
+
+# Highlight при нажатии клавиши
+key-hl-color=a6e3a1      # green — нажатие
+bs-hl-color=f38ba8       # red — backspace
+
+# Показывать счётчик неверных попыток
+show-failed-attempts
+
+# Не выводить версию поверх экрана
+no-unlock-indicator
