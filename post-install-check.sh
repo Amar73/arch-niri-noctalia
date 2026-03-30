@@ -15,14 +15,14 @@ check_cmd() {
 }
 
 echo "=== commands ==="
-for cmd in niri niri-session foot fuzzel mako waybar swayidle swaylock wl-paste cliphist qs tuigreet nwg-look qt6ct ssh keychain yay btop; do
+for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock wl-paste cliphist qs tuigreet nwg-look qt6ct ssh keychain yay btop; do
   check_cmd "$cmd"
 done
 
 echo
 echo "=== package checks ==="
 for pkg in \
-  niri greetd greetd-tuigreet foot fuzzel mako waybar swayidle swaylock btop \
+  niri greetd greetd-tuigreet alacritty fuzzel mako waybar swayidle swaylock btop \
   wl-clipboard cliphist xdg-desktop-portal xdg-desktop-portal-wlr \
   qt6ct kvantum nwg-look noto-fonts papirus-icon-theme bibata-cursor-theme \
   keychain openssh; do
@@ -43,7 +43,7 @@ for f in \
   "$HOME/.ssh/config" \
   "$HOME/.config/niri/config.kdl" \
   "$HOME/.config/niri/conf.d/keymap.xkb" \
-  "$HOME/.config/foot/foot.ini" \
+  "$HOME/.config/foot/alacritty.ini" \
   "$HOME/.config/waybar/config.jsonc" \
   "$HOME/.config/waybar/style.css" \
   "$HOME/.config/swaylock/config" \

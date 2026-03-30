@@ -29,7 +29,7 @@ Bootstrap-репозиторий для чистого Arch Linux.
 
 | Файл | Описание |
 |------|----------|
-| `files/home/.config/foot/foot.ini` | Конфиг терминала, палитра Catppuccin Mocha |
+| `files/home/.config/alacritty/` | Конфиг терминала alacritty, палитра Catppuccin Mocha |
 | `files/home/.config/swaylock/config` | Конфиг блокировщика, та же палитра |
 | `files/home/.config/waybar/config.jsonc` | Waybar: niri/workspaces, niri/window, cpu, mem, disk, temp, audio, net, lang |
 | `files/home/.config/waybar/style.css` | Waybar CSS, Catppuccin Mocha, прозрачный фон |
@@ -147,7 +147,7 @@ arch-niri-noctalia/
             │       ├── 40-startup.kdl
             │       ├── 50-binds.kdl   ← расширен
             │       └── keymap.xkb
-            ├── foot/foot.ini          ← NEW
+            ├── alacritty          ← NEW
             ├── swaylock/config        ← NEW
             ├── waybar/
             │   ├── config.jsonc       ← NEW

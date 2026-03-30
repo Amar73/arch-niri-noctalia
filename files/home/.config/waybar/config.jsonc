@@ -80,7 +80,7 @@
     "format": "󰻠 {usage}%",
     "interval": 3,
     "tooltip": false,
-    "on-click": "foot -e btop"
+    "on-click": "alacritty -e btop"
   },
 
   "memory": {
@@ -88,7 +88,7 @@
     "format-alt": "󰍛 {percentage}%",
     "interval": 5,
     "tooltip-format": "Used: {used:0.2f}G / {total:0.2f}G\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G",
-    "on-click": "foot -e btop"
+    "on-click": "alacritty -e btop"
   },
 
   "disk": {
@@ -116,7 +116,7 @@
     },
     "scroll-step": 5,
     "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-    "on-click-right": "foot -e pulsemixer",
+    "on-click-right": "alacritty -e pulsemixer",
     "tooltip-format": "{desc} — {volume}%"
   },
 
@@ -128,7 +128,7 @@
     "tooltip-format-wifi":  "{essid}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
     "tooltip-format-ethernet": "{ifname}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
     "interval": 5,
-    "on-click": "foot -e nmtui"
+    "on-click": "alacritty -e nmtui"
   },
 
   "niri/language": {

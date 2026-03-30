@@ -1,5 +1,5 @@
 binds {
-    Mod+Return { spawn "foot"; }
+    Mod+Return { spawn "alacritty"; }
     Mod+D { spawn "fuzzel"; }
     Mod+Q { close-window; }
     Mod+Shift+E { quit; }
