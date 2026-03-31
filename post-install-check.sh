@@ -15,7 +15,7 @@ check_cmd() {
 }
 
 echo "=== commands ==="
-for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock wl-paste cliphist qs tuigreet nwg-look qt6ct ssh keychain yay btop; do
+for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock wl-paste cliphist tuigreet nwg-look qt6ct ssh keychain yay btop; do
   check_cmd "$cmd"
 done
 
@@ -33,7 +33,6 @@ for pkg in \
   fi
 done
 
-pacman -Q noctalia-shell >/dev/null 2>&1 && ok "package: noctalia-shell" || fail "package missing: noctalia-shell"
 
 echo
 echo "=== config files ==="
@@ -47,7 +46,6 @@ for f in \
   "$HOME/.config/waybar/config.jsonc" \
   "$HOME/.config/waybar/style.css" \
   "$HOME/.config/swaylock/config" \
-  "$HOME/.config/systemd/user/noctalia.service" \
   "$HOME/.config/systemd/user/swayidle.service" \
   "$HOME/.config/systemd/user/cliphist-text.service" \
   "$HOME/.config/systemd/user/cliphist-images.service" \
@@ -81,7 +79,6 @@ systemctl is-enabled greetd.service         >/dev/null 2>&1 && ok "greetd enable
 
 echo
 echo "=== user services ==="
-systemctl --user is-enabled noctalia.service        >/dev/null 2>&1 && ok "noctalia.service enabled"        || warn "noctalia.service not enabled"
 systemctl --user is-enabled swayidle.service        >/dev/null 2>&1 && ok "swayidle.service enabled"        || warn "swayidle.service not enabled"
 systemctl --user is-enabled cliphist-text.service   >/dev/null 2>&1 && ok "cliphist-text.service enabled"   || warn "cliphist-text.service not enabled"
 systemctl --user is-enabled cliphist-images.service >/dev/null 2>&1 && ok "cliphist-images.service enabled" || warn "cliphist-images.service not enabled"

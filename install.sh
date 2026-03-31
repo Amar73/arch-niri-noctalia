@@ -34,17 +34,6 @@ install_yay() {
   rm -rf "$tmpdir"
 }
 
-remove_conflicts() {
-  if pacman -Q quickshell >/dev/null 2>&1; then
-    log "Удаляю quickshell"
-    sudo pacman -Rns --noconfirm quickshell
-  fi
-
-  if pacman -Q quickshell-git >/dev/null 2>&1; then
-    log "Удаляю quickshell-git"
-    yay -Rns --noconfirm quickshell-git || true
-  fi
-}
 
 install_official_packages() {
   log "Обновление системы"
@@ -88,10 +77,6 @@ add_groups() {
   sudo usermod -aG video,input,seat "$USER" || true
 }
 
-install_noctalia() {
-  log "Установка Noctalia"
-  yay -S --needed --noconfirm noctalia-shell
-}
 
 backup_if_exists() {
   local path="$1"
@@ -137,10 +122,10 @@ deploy_files() {
 enable_user_services() {
   log "Включение user services"
   systemctl --user daemon-reload
-  systemctl --user enable noctalia.service
   systemctl --user enable swayidle.service
   systemctl --user enable cliphist-text.service
   systemctl --user enable cliphist-images.service
+  systemctl --user enable waybar.service 2>/dev/null || true
 }
 
 print_summary() {
@@ -172,8 +157,6 @@ main() {
   enable_system_services
   add_groups
   install_yay
-  remove_conflicts
-  install_noctalia
   deploy_files
   enable_user_services
   print_summary

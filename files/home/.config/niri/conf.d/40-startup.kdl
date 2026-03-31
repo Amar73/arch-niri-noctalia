@@ -2,9 +2,3 @@ spawn-at-startup "mako"
 spawn-at-startup "waybar"
 spawn-at-startup "swaybg" "-c" "#111111"
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
-
-// ПРИМЕЧАНИЕ: noctalia-shell запускается отдельно через systemd user service.
-// Если используешь waybar — отключи noctalia.service во избежание двух панелей:
-//   systemctl --user disable --now noctalia.service
-// Если хочешь noctalia вместо waybar — закомментируй строку waybar выше
-// и включи: systemctl --user enable --now noctalia.service

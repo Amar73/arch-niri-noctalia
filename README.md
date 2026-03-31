@@ -1,4 +1,4 @@
-# Arch Linux + Niri + Noctalia v6.3
+# Arch Linux + Niri + Waybar v6.3
 
 Bootstrap-репозиторий для чистого Arch Linux.
 
@@ -29,7 +29,7 @@ Bootstrap-репозиторий для чистого Arch Linux.
 
 | Файл | Описание |
 |------|----------|
-| `files/home/.config/alacritty/` | Конфиг терминала alacritty, палитра Catppuccin Mocha |
+| `files/home/.config/alacritty/alacritty.toml` | Конфиг терминала, палитра Catppuccin Mocha |
 | `files/home/.config/swaylock/config` | Конфиг блокировщика, та же палитра |
 | `files/home/.config/waybar/config.jsonc` | Waybar: niri/workspaces, niri/window, cpu, mem, disk, temp, audio, net, lang |
 | `files/home/.config/waybar/style.css` | Waybar CSS, Catppuccin Mocha, прозрачный фон |
@@ -52,28 +52,10 @@ Bootstrap-репозиторий для чистого Arch Linux.
 
 ---
 
-## Waybar vs Noctalia
+## Waybar
 
-В репо оба варианта. По умолчанию запускается **waybar** (через `40-startup.kdl`).
-
-**Переключиться на noctalia:**
-```bash
-# Убрать waybar из автозапуска — закомментировать строку в 40-startup.kdl:
-# spawn-at-startup "waybar"
-
-# Включить noctalia service:
-systemctl --user enable --now noctalia.service
-
-# Перезагрузить niri конфиг:
-niri msg action reload-config
-```
-
-**Вернуться на waybar:**
-```bash
-systemctl --user disable --now noctalia.service
-# Раскомментировать spawn-at-startup "waybar" в 40-startup.kdl
-niri msg action reload-config
-```
+В текущей версии используется только **waybar** (через `40-startup.kdl`).
+Запускается при старте niri, управляется как обычный процесс.
 
 ## Настройка waybar
 
@@ -99,8 +81,8 @@ niri msg event-stream | grep keyboard
 ## Установка
 
 ```bash
-git clone <YOUR_REPO_URL> arch-niri-noctalia
-cd arch-niri-noctalia
+git clone <YOUR_REPO_URL> arch-niri-waybar
+cd arch-niri-waybar
 chmod +x *.sh
 make install
 sudo reboot
@@ -111,8 +93,9 @@ sudo reboot
 | Команда | Действие |
 |---------|----------|
 | `make install` | Полная установка с нуля |
-| `make check` | Post-install проверка всех компонентов |
-| `make sync` | Синхронизация конфигов из репо в систему |
+| `make check` | Post-install проверка (требует живой Arch + сервисы) |
+| `make check-local` | Только синтаксис и структура файлов — работает везде, включая CI |
+| `make sync` | Синхронизация конфигов + smoke-check сервисов |
 | `make update` | Обновление системы (pacman + yay + orphans) |
 | `make logs` | Просмотр логов всех сервисов |
 | `make backup` | Резервная копия конфигов |
@@ -123,7 +106,7 @@ sudo reboot
 ## Структура репозитория
 
 ```
-arch-niri-noctalia/
+arch-niri-waybar/
 ├── Makefile
 ├── install.sh
 ├── post-install-check.sh
@@ -147,7 +130,7 @@ arch-niri-noctalia/
             │       ├── 40-startup.kdl
             │       ├── 50-binds.kdl   ← расширен
             │       └── keymap.xkb
-            ├── alacritty          ← NEW
+            ├── alacritty/alacritty.toml  ← NEW
             ├── swaylock/config        ← NEW
             ├── waybar/
             │   ├── config.jsonc       ← NEW
@@ -158,7 +141,6 @@ arch-niri-noctalia/
             ├── gtk-3.0/settings.ini
             ├── gtk-4.0/settings.ini
             └── systemd/user/
-                ├── noctalia.service
                 ├── swayidle.service
                 ├── cliphist-text.service    ← переименован
                 └── cliphist-images.service  ← NEW

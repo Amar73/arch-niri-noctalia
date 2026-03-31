@@ -5,8 +5,8 @@ echo "===== greetd ====="
 journalctl -b -u greetd -n 80 --no-pager || true
 echo
 
-echo "===== noctalia.service ====="
-journalctl --user -b -u noctalia.service -n 80 --no-pager || true
+echo "===== waybar ====="
+journalctl --user -b -u waybar -n 80 --no-pager || true
 echo
 
 echo "===== swayidle.service ====="

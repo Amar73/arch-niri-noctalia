@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 STAMP="$(date +%F-%H%M%S)"
-BACKUP_DIR="${HOME}/backup/niri-noctalia-${STAMP}"
+BACKUP_DIR="${HOME}/backup/niri-waybar-${STAMP}"
 
 mkdir -p "${BACKUP_DIR}/etc/greetd"
 mkdir -p "${BACKUP_DIR}/home/.ssh"

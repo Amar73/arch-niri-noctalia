@@ -43,6 +43,23 @@ install -m 600 "${FILES_DIR}/home/.ssh/config" "$HOME/.ssh/config"
 echo "[*] Reload user units"
 systemctl --user daemon-reload
 
+echo "[*] Restart user services"
+for svc in waybar swayidle cliphist-text cliphist-images; do
+  if systemctl --user is-enabled "$svc.service" >/dev/null 2>&1; then
+    systemctl --user restart "$svc.service" \
+      && echo "[OK] restarted: $svc" \
+      || echo "[WARN] failed to restart: $svc"
+  fi
+done
+
+echo "[*] Check for failed units"
+failed=$(systemctl --user --failed --no-legend 2>/dev/null | awk '{print $1}' | tr '\n' ' ')
+if [[ -n "$failed" ]]; then
+  echo "[WARN] Failed user units: $failed"
+else
+  echo "[OK] No failed user units"
+fi
+
 echo "[*] Validate niri config"
 niri validate || true
 
