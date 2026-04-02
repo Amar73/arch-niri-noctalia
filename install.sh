@@ -10,30 +10,21 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FILES_DIR="${ROOT_DIR}/files"
 
 need() {
-  command -v "$1" >/dev/null 2>&1 || die "Не найдено: $1"
+  command -v "$1" >/dev/null 2>&1 || die "Не найдено: $1. На чистом Arch: sudo pacman -S $1"
 }
 
-# ИСПРАВЛЕНО v6.3: paru → yay
-# ИСПРАВЛЕНО v6.3: убран trap EXIT (глобальный — перезаписывал любой последующий)
-#   Заменён на явную очистку tmpdir после makepkg
 install_yay() {
   if command -v yay >/dev/null 2>&1; then
     log "yay уже установлен"
     return 0
   fi
-
   local tmpdir
   tmpdir="$(mktemp -d)"
   log "Установка yay"
   git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
-  (
-    cd "$tmpdir/yay"
-    makepkg -si --noconfirm
-  )
-  # Явная очистка вместо trap EXIT — безопасна для вложенных вызовов
+  (cd "$tmpdir/yay" && makepkg -si --noconfirm)
   rm -rf "$tmpdir"
 }
-
 
 install_official_packages() {
   log "Обновление системы"
@@ -44,16 +35,17 @@ install_official_packages() {
     base-devel git rsync curl wget unzip \
     niri \
     waybar \
-    btop \
+    btop jq \
     greetd greetd-tuigreet \
     networkmanager seatd \
-    pipewire wireplumber \
-    xdg-desktop-portal xdg-desktop-portal-wlr \
+    pipewire wireplumber pipewire-pulse \
+    xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
     alacritty fuzzel mako \
     swaybg swayidle swaylock \
     wl-clipboard cliphist \
     polkit-gnome \
     brightnessctl playerctl \
+    pulsemixer \
     grim slurp \
     mesa vulkan-icd-loader \
     qt6-wayland qt6-svg qt6-multimedia \
@@ -63,9 +55,6 @@ install_official_packages() {
     adw-gtk-theme papirus-icon-theme \
     xwayland-satellite \
     keychain openssh
-  # ИСПРАВЛЕНО v6.3: qt5-wayland убран из pacman-блока —
-  # в Arch 2026 он может быть частью qt5-base или отсутствовать как отдельный пакет.
-  # Ставится через yay в install_aur_packages() с защитой || true.
 }
 
 enable_system_services() {
@@ -80,35 +69,29 @@ add_groups() {
   sudo usermod -aG video,input,seat "$USER" || true
 }
 
-
 install_aur_packages() {
   log "Установка AUR-пакетов (yay)"
-  # bibata-cursor-theme — только в AUR
   yay -S --needed --noconfirm bibata-cursor-theme
-
-  # ИСПРАВЛЕНО v6.3: qt5-wayland перенесён сюда из pacman-блока.
-  # На Arch 2026 пакет может называться иначе или быть включён в qt5-base —
-  # поэтому || true: падение не должно ломать весь деплой.
+  # qt5-wayland — в extra как отдельный пакет, на новых ядрах может быть в qt5-base
   yay -S --needed --noconfirm qt5-wayland 2>/dev/null \
-    || log "WARN: qt5-wayland не найден в AUR/extra — возможно уже в qt5-base, пропускаем"
+    || log "WARN: qt5-wayland не найден — возможно включён в qt5-base, пропускаем"
 }
 
 backup_if_exists() {
   local path="$1"
   if [[ -e "$path" && ! -L "$path" ]]; then
-    local stamp
-    stamp="$(date +%F-%H%M%S)"
+    local stamp; stamp="$(date +%F-%H%M%S)"
     cp -a "$path" "${path}.bak.${stamp}"
   fi
 }
 
 deploy_dotfiles() {
-  log "Копирование пользовательских bashrc и ssh config"
+  log "Копирование .bashrc и .ssh/config"
   mkdir -p "$HOME/.ssh"
   chmod 700 "$HOME/.ssh"
   backup_if_exists "$HOME/.bashrc"
   backup_if_exists "$HOME/.ssh/config"
-  install -m 644 "${FILES_DIR}/home/.bashrc" "$HOME/.bashrc"
+  install -m 644 "${FILES_DIR}/home/.bashrc"    "$HOME/.bashrc"
   install -m 600 "${FILES_DIR}/home/.ssh/config" "$HOME/.ssh/config"
 }
 
@@ -120,8 +103,6 @@ deploy_files() {
 
   mkdir -p "${HOME}/.config"
 
-  # ИСПРАВЛЕНО v6.3: добавлена защита перед rsync --delete.
-  # Пустой или несуществующий src при --delete уничтожал весь ~/.config
   local config_src="${FILES_DIR}/home/.config"
   [[ -d "$config_src" ]] \
     || die "Директория конфигов не найдена: $config_src"
@@ -140,7 +121,7 @@ enable_user_services() {
   systemctl --user enable swayidle.service
   systemctl --user enable cliphist-text.service
   systemctl --user enable cliphist-images.service
-  systemctl --user enable waybar.service 2>/dev/null || true
+  # waybar запускается через niri spawn-at-startup, не через systemd unit
 }
 
 print_summary() {
@@ -169,8 +150,11 @@ EOF
 main() {
   need sudo
   need pacman
-  need git
-  need rsync
+  # git и rsync могут отсутствовать на минимальном Arch — ставим их первыми
+  if ! command -v git >/dev/null 2>&1 || ! command -v rsync >/dev/null 2>&1; then
+    log "Предустановка git и rsync"
+    sudo pacman -S --needed --noconfirm git rsync
+  fi
 
   install_official_packages
   enable_system_services

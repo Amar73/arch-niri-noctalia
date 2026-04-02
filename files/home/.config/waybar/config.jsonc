@@ -1,7 +1,7 @@
 {
   // ==========================================================================
   // waybar config — niri + Catppuccin Mocha
-  // Требует: waybar (Arch extra), wireplumber, network-manager
+  // Требует: waybar (Arch extra), wireplumber, networkmanager
   // Нативные niri-модули: niri/workspaces, niri/window, niri/language
   // ==========================================================================
   "layer": "top",
@@ -32,7 +32,7 @@
   ],
 
   // --------------------------------------------------------------------------
-  // LEFT — workspaces & window title
+  // LEFT
   // --------------------------------------------------------------------------
   "niri/workspaces": {
     "format": "{icon}",
@@ -55,7 +55,7 @@
   },
 
   // --------------------------------------------------------------------------
-  // CENTER — clock
+  // CENTER
   // --------------------------------------------------------------------------
   "clock": {
     "timezone": "Europe/Moscow",
@@ -120,11 +120,11 @@
   },
 
   "network": {
-    "format-wifi":          "󰤨 {essid} {signalStrength}%",
-    "format-ethernet":      "󰈀 {ipaddr}",
-    "format-disconnected":  "󰤭 offline",
-    "format-linked":        "󰈀 (no IP)",
-    "tooltip-format-wifi":  "{essid}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
+    "format-wifi":             "󰤨 {essid} {signalStrength}%",
+    "format-ethernet":         "󰈀 {ipaddr}",
+    "format-disconnected":     "󰤭 offline",
+    "format-linked":           "󰈀 (no IP)",
+    "tooltip-format-wifi":     "{essid}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
     "tooltip-format-ethernet": "{ifname}\nIP: {ipaddr}\n↓ {bandwidthDownBits}  ↑ {bandwidthUpBits}",
     "interval": 5,
     "on-click": "alacritty -e nmtui"
@@ -137,10 +137,7 @@
   // Точные имена — из: niri msg --json keyboard-layouts | jq .
   // Стандартные значения для us/ru: "English (US)" и "Russian".
   //
-  // Если у тебя другие имена (например "English" без скобок) — замени ключи
-  // format-"English (US)" и format-"Russian" на то, что вернёт команда выше.
-  //
-  // Диагностика: niri msg event-stream | grep -i keyboard
+  // Если у тебя другие имена — замени ключи ниже на вывод команды выше.
   // --------------------------------------------------------------------------
   "niri/language": {
     "format-English (US)": "󰌌 EN",

@@ -1,107 +1,253 @@
 # Arch Linux + Niri + Waybar v6.3
 
 Bootstrap-репозиторий для чистого Arch Linux.
+Стек: niri (tiling Wayland compositor) + Waybar + Alacritty + Catppuccin Mocha.
 
-## Что изменилось в v6.3
+---
 
-### Исправлено (багфиксы)
+## Что нужно сделать ПЕРЕД make install
 
-- **git-алиасы `gp`/`gl`/`gpf`** → переведены в функции.
-  В v6.2 `$()` в алиасах вычислялся при `source .bashrc`, а не при вызове —
-  ветка фиксировалась в момент загрузки оболочки. Теперь читается в runtime.
+### 1. Базовые требования к системе
 
-- **`rsync --delete` в `sync.sh` и `install.sh`** → добавлена защита.
-  Пустой или несуществующий источник при `--delete` уничтожал весь `~/.config`.
-  Теперь скрипт падает с ошибкой до `rsync`, если src не найден или пуст.
+- Установленный Arch Linux (base, linux, linux-firmware)
+- Пользователь в группе `wheel` с настроенным sudo:
+  ```bash
+  groups $USER   # должна быть wheel
+  sudo -v        # должно пройти без ошибки
+  ```
+- Подключение к интернету:
+  ```bash
+  ping -c2 archlinux.org
+  ```
 
-- **`trap EXIT` в `install_paru()`** → заменён на явную очистку tmpdir.
-  `trap EXIT` глобален в bash — перезаписывал любой последующий trap.
+### 2. Предустановка минимального набора
 
-- **`paru`** → заменён на **`yay`** во всех скриптах и проверках.
+На чистом Arch `git` и `rsync` могут отсутствовать. `install.sh` ставит их
+автоматически если не найдёт, но лучше сделать вручную:
 
-- **Мёртвая переменная `REPO_URL="${2:-}"`** убрана из `bootstrap-dotfiles.sh`.
-
-- **`autoremove()`** — добавлен `# shellcheck disable=SC2086` с объяснением.
-
-- **`gp`/`gpf`/`gl` добавлены в `unset -f`** внутри функции `reload()`.
-
-### Новое
-
-| Файл | Описание |
-|------|----------|
-| `files/home/.config/alacritty/alacritty.toml` | Конфиг терминала, палитра Catppuccin Mocha |
-| `files/home/.config/swaylock/config` | Конфиг блокировщика, та же палитра |
-| `files/home/.config/waybar/config.jsonc` | Waybar: niri/workspaces, niri/window, cpu, mem, disk, temp, audio, net, lang |
-| `files/home/.config/waybar/style.css` | Waybar CSS, Catppuccin Mocha, прозрачный фон |
-| `files/home/.config/systemd/user/cliphist-text.service` | История текстового буфера (переименован из `cliphist.service`) |
-| `files/home/.config/systemd/user/cliphist-images.service` | История буфера изображений |
-| `update.sh` | Комплексное обновление: pacman → yay → orphans → daemon-reload → валидация |
-| `make update` | Новая цель в Makefile |
-| `50-binds.kdl` | Добавлены: `Mod+F`, `Mod+Shift+F`, `Mod+C`, `Mod+R`, `Mod+±`, медиаклавиши, `Mod+V` (cliphist picker), `Mod+Print` (полный скриншот) |
-
-### Примечание по SSH
-
-Перед деплоем убедись что `amar`, `wn75`, `ui` резолвятся:
-
+```bash
+sudo pacman -S --needed git rsync base-devel
 ```
-# /etc/hosts
+
+`base-devel` нужен для сборки `yay` через `makepkg`.
+
+### 3. SSH-ключ для GitHub (если клонируешь по SSH)
+
+```bash
+# Сгенерировать ключ если нет
+ssh-keygen -t ed25519 -C "your@email.com" -f ~/.ssh/id_ed25519
+
+# Добавить публичный ключ на github.com → Settings → SSH keys
+cat ~/.ssh/id_ed25519.pub
+
+# Проверить
+ssh -T git@github.com
+# Ожидаемый ответ: "Hi USERNAME! You've successfully authenticated..."
+```
+
+### 4. /etc/hosts для SSH-инфраструктуры
+
+Если используешь ProxyJump-цепочки из `.ssh/config` — хосты должны резолвиться.
+Без этого `amar224 → wn75 → arch03` ломается на первом прыжке:
+
+```bash
+sudo tee -a /etc/hosts << 'EOF'
 192.168.1.100  amar
 192.168.1.101  wn75
 192.168.1.110  ui
+EOF
+```
+
+Замени IP на реальные адреса своей инфраструктуры.
+
+### 5. Клонирование репозитория
+
+```bash
+git clone git@github.com:YOUR_USERNAME/arch-niri-waybar.git ~/Amar73/arch-niri-noctalia
+cd ~/Amar73/arch-niri-noctalia
+chmod +x *.sh
+```
+
+### 6. Проверка до запуска
+
+```bash
+# Синтаксис и структура файлов — без pacman/systemctl, работает везде
+make check-local
 ```
 
 ---
 
-## Waybar
-
-В текущей версии используется только **waybar** (через `40-startup.kdl`).
-Запускается при старте niri, управляется как обычный процесс.
-
-## Настройка waybar
-
-Если `#temperature` не показывает температуру — найди нужный hwmon:
-```bash
-for f in /sys/class/hwmon/hwmon*/temp1_input; do
-  echo "$f: $(cat $f)"
-done
-```
-Затем укажи явно в `config.jsonc`:
-```json
-"temperature": {
-  "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input",
-  ...
-}
-```
-
-Если `#language` показывает не то — проверь:
-```bash
-niri msg event-stream | grep keyboard
-```
-
 ## Установка
 
 ```bash
-git clone <YOUR_REPO_URL> arch-niri-waybar
-cd arch-niri-waybar
-chmod +x *.sh
 make install
 sudo reboot
 ```
+
+После входа в niri:
+
+```bash
+make check    # полная проверка всех компонентов
+make logs     # логи сервисов текущей загрузки
+```
+
+---
+
+## Что делает make install
+
+Порядок выполнения:
+
+1. `sudo pacman -Syu` — обновление системы
+2. `sudo pacman -S ...` — официальные пакеты (список ниже)
+3. Включение сервисов: NetworkManager, seatd, greetd
+4. Добавление пользователя в группы: video, input, seat
+5. Сборка и установка `yay` из AUR
+6. AUR-пакеты: `bibata-cursor-theme`, `qt5-wayland`
+7. `rsync` конфигов в `~/.config/`
+8. Деплой `.bashrc` и `.ssh/config`
+9. Включение user-сервисов: swayidle, cliphist-text, cliphist-images
+
+### Устанавливаемые пакеты
+
+| Группа | Пакеты |
+|--------|--------|
+| Базовые | `base-devel git rsync curl wget unzip` |
+| WM | `niri xwayland-satellite` |
+| Статусбар | `waybar` |
+| Терминал | `alacritty` |
+| Лончер | `fuzzel` |
+| Уведомления | `mako` |
+| Фон / блокировка | `swaybg swayidle swaylock` |
+| Буфер обмена | `wl-clipboard cliphist` |
+| Аудио | `pipewire wireplumber pipewire-pulse pulsemixer` |
+| Видео | `mesa vulkan-icd-loader` |
+| Скриншоты | `grim slurp` |
+| Медиаклавиши | `brightnessctl playerctl` |
+| Qt6 | `qt6-wayland qt6-svg qt6-multimedia qt6ct kvantum` |
+| GTK | `nwg-look adw-gtk-theme` |
+| Иконки | `papirus-icon-theme` |
+| Шрифты | `noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd` |
+| Порталы | `xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk` |
+| Auth | `polkit-gnome` |
+| Greeter | `greetd greetd-tuigreet` |
+| Сеть | `networkmanager seatd` |
+| SSH | `openssh keychain` |
+| Диагностика | `btop jq` |
+| AUR | `bibata-cursor-theme qt5-wayland` |
+
+---
 
 ## Цели Makefile
 
 | Команда | Действие |
 |---------|----------|
 | `make install` | Полная установка с нуля |
-| `make check` | Post-install проверка (требует живой Arch + сервисы) |
-| `make check-local` | Только синтаксис и структура файлов — работает везде, включая CI |
+| `make check` | Post-install проверка (требует живой Arch + запущенные сервисы) |
+| `make check-local` | Синтаксис + структура файлов, работает везде (CI) |
 | `make sync` | Синхронизация конфигов + smoke-check сервисов |
-| `make update` | Обновление системы (pacman + yay + orphans) |
-| `make logs` | Просмотр логов всех сервисов |
-| `make backup` | Резервная копия конфигов |
+| `make update` | pacman → yay → orphans → daemon-reload → валидация |
+| `make logs` | Логи всех сервисов текущей сессии |
+| `make backup` | Резервная копия `/etc/greetd`, `~/.config`, `.bashrc`, `.ssh/config` |
 | `make dots-local` | Деплой только `.bashrc` и `.ssh/config` |
 | `make validate` | Валидация niri config |
 | `make reload` | Reload niri config без перезапуска |
+
+---
+
+## Настройка после установки
+
+### Waybar: раскладка клавиатуры
+
+Модуль `niri/language` использует полные XKB-имена. Проверить реальные:
+
+```bash
+niri msg --json keyboard-layouts | jq .
+```
+
+Стандартные для `us+ru`: `"English (US)"` и `"Russian"`.
+Если у тебя другие — отредактировать `~/.config/waybar/config.jsonc`:
+
+```jsonc
+"niri/language": {
+  "format-English (US)": "󰌌 EN",
+  "format-Russian":      "󰌌 RU"
+}
+```
+
+После правки: `pkill waybar && waybar &` или `make reload`.
+
+### Waybar: температура CPU
+
+Если модуль не показывает температуру:
+
+```bash
+for f in /sys/class/hwmon/hwmon*/temp1_input; do echo "$f: $(cat $f)"; done
+```
+
+Добавить в `~/.config/waybar/config.jsonc`:
+
+```jsonc
+"temperature": {
+  "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input"
+}
+```
+
+---
+
+## Биндинги Niri
+
+| Клавиша | Действие |
+|---------|----------|
+| `Mod+Return` | Alacritty |
+| `Mod+D` | Fuzzel (лончер) |
+| `Mod+Q` | Закрыть окно |
+| `Mod+Shift+E` | Выйти из niri |
+| `Mod+←→↑↓` | Навигация по колонкам/окнам |
+| `Mod+Shift+←→↑↓` | Перемещение колонок/окон |
+| `Mod+1..5` | Переключение воркспейсов |
+| `Mod+Shift+1..5` | Перенос колонки на воркспейс |
+| `Mod+F` | Развернуть колонку |
+| `Mod+Shift+F` | Полноэкранный режим |
+| `Mod+C` | Центрировать колонку |
+| `Mod+R` | Переключить пресет ширины |
+| `Mod+−/=` | Ширина колонки ±10% |
+| `Mod+V` | Cliphist picker |
+| `Print` | Скриншот области |
+| `Mod+Print` | Скриншот экрана |
+| `XF86Audio*` | Громкость (wpctl) |
+| `XF86Brightness*` | Яркость (brightnessctl) |
+
+---
+
+## Что изменилось в v6.3
+
+### Исправлено
+
+- `gp`/`gl`/`gpf` — функции вместо алиасов (ветка читается в runtime)
+- `rsync --delete` — защита от пустого src в `sync.sh` и `install.sh`
+- `trap EXIT` в `install_yay()` — явная очистка tmpdir
+- `paru` → `yay` везде
+- `qt5-compat` (несуществующий) → `qt5-wayland` через yay с `|| true`
+- `bibata-cursor-theme` → перенесён в AUR (yay)
+- Добавлены пропущенные пакеты: `wireplumber`, `pipewire-pulse`, `pulsemixer`, `jq`, `xdg-desktop-portal-gtk`
+- `need git/rsync` → `install.sh` сам ставит их на чистом Arch
+- `waybar.service enable` → убран (waybar стартует через `niri spawn-at-startup`)
+- Мёртвая переменная `REPO_URL="${2:-}"` убрана из `bootstrap-dotfiles.sh`
+
+### Новое
+
+| Файл | Описание |
+|------|----------|
+| `alacritty/alacritty.toml` | Catppuccin Mocha, beam cursor, 10k scrollback, URL hints |
+| `swaylock/config` | Catppuccin Mocha, согласован с waybar |
+| `waybar/config.jsonc` | niri/workspaces, window, cpu, mem, disk, temp, audio, net, lang |
+| `waybar/style.css` | Catppuccin Mocha CSS, прозрачный фон, pulse-анимации |
+| `cliphist-text.service` | История текстового буфера обмена |
+| `cliphist-images.service` | История буфера изображений |
+| `check-local.sh` + `make check-local` | Синтаксис + структура без pacman/systemctl |
+| `update.sh` + `make update` | Комплексное обновление системы |
+
+---
 
 ## Структура репозитория
 
@@ -109,9 +255,10 @@ sudo reboot
 arch-niri-waybar/
 ├── Makefile
 ├── install.sh
+├── check-local.sh
 ├── post-install-check.sh
 ├── sync.sh
-├── update.sh                          ← NEW
+├── update.sh
 ├── logs.sh
 ├── backup.sh
 ├── bootstrap-dotfiles.sh
@@ -128,13 +275,13 @@ arch-niri-waybar/
             │       ├── 20-layout.kdl
             │       ├── 30-environment.kdl
             │       ├── 40-startup.kdl
-            │       ├── 50-binds.kdl   ← расширен
+            │       ├── 50-binds.kdl
             │       └── keymap.xkb
-            ├── alacritty/alacritty.toml  ← NEW
-            ├── swaylock/config        ← NEW
+            ├── alacritty/alacritty.toml
+            ├── swaylock/config
             ├── waybar/
-            │   ├── config.jsonc       ← NEW
-            │   └── style.css          ← NEW
+            │   ├── config.jsonc
+            │   └── style.css
             ├── mako/config
             ├── fuzzel/fuzzel.ini
             ├── qt6ct/qt6ct.conf
@@ -142,6 +289,6 @@ arch-niri-waybar/
             ├── gtk-4.0/settings.ini
             └── systemd/user/
                 ├── swayidle.service
-                ├── cliphist-text.service    ← переименован
-                └── cliphist-images.service  ← NEW
+                ├── cliphist-text.service
+                └── cliphist-images.service
 ```

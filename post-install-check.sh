@@ -15,15 +15,17 @@ check_cmd() {
 }
 
 echo "=== commands ==="
-for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock wl-paste cliphist tuigreet nwg-look qt6ct ssh keychain yay btop; do
+for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock \
+           wl-paste cliphist tuigreet nwg-look qt6ct ssh keychain yay btop jq pulsemixer; do
   check_cmd "$cmd"
 done
 
 echo
 echo "=== package checks ==="
 for pkg in \
-  niri greetd greetd-tuigreet alacritty fuzzel mako waybar swayidle swaylock btop \
-  wl-clipboard cliphist xdg-desktop-portal xdg-desktop-portal-wlr \
+  niri greetd greetd-tuigreet alacritty fuzzel mako waybar swayidle swaylock btop jq \
+  wl-clipboard cliphist xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
+  pipewire wireplumber pipewire-pulse pulsemixer \
   qt6ct kvantum nwg-look noto-fonts papirus-icon-theme \
   keychain openssh; do
   if pacman -Q "$pkg" >/dev/null 2>&1; then
@@ -33,22 +35,18 @@ for pkg in \
   fi
 done
 
-# ИСПРАВЛЕНО v6.3: qt5-wayland переведён в warn —
-# в Arch 2026 пакет может быть частью qt5-base или отсутствовать отдельно.
-# Падение не должно ломать check.
 echo
-echo "=== qt5-wayland (optional) ==="
-if pacman -Q qt5-wayland >/dev/null 2>&1; then
-  ok "package: qt5-wayland"
-else
-  warn "qt5-wayland не найден как отдельный пакет — возможно включён в qt5-base, это нормально"
-fi
+echo "=== optional packages ==="
+# qt5-wayland — может быть включён в qt5-base на новых версиях
+pacman -Q qt5-wayland >/dev/null 2>&1 \
+  && ok "package: qt5-wayland" \
+  || warn "qt5-wayland не найден отдельно — возможно в qt5-base, это нормально"
 
 echo
 echo "=== AUR packages ==="
 pacman -Q bibata-cursor-theme >/dev/null 2>&1 \
   && ok "package: bibata-cursor-theme (AUR)" \
-  || warn "package missing: bibata-cursor-theme — установи: yay -S bibata-cursor-theme"
+  || warn "bibata-cursor-theme не найден — установи: yay -S bibata-cursor-theme"
 
 echo
 echo "=== config files ==="
@@ -75,17 +73,11 @@ done
 
 echo
 echo "=== syntax checks ==="
-if bash -n "$HOME/.bashrc" >/dev/null 2>&1; then
-  ok "bashrc syntax valid"
-else
-  fail "bashrc syntax invalid"
-fi
+bash -n "$HOME/.bashrc" >/dev/null 2>&1 \
+  && ok "bashrc syntax valid" || fail "bashrc syntax invalid"
 
-if ssh -G github.com >/dev/null 2>&1; then
-  ok "ssh config parses"
-else
-  fail "ssh config parse failed"
-fi
+ssh -G github.com >/dev/null 2>&1 \
+  && ok "ssh config parses" || fail "ssh config parse failed"
 
 echo
 echo "=== system services ==="
@@ -101,11 +93,8 @@ systemctl --user is-enabled cliphist-images.service >/dev/null 2>&1 && ok "cliph
 
 echo
 echo "=== niri config validation ==="
-if niri validate >/dev/null 2>&1; then
-  ok "niri config valid"
-else
-  fail "niri config invalid"
-fi
+niri validate >/dev/null 2>&1 \
+  && ok "niri config valid" || fail "niri config invalid"
 
 echo
 echo "=== niri keyboard layouts ==="
