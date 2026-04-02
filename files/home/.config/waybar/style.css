@@ -1,34 +1,18 @@
 /* =============================================================================
    waybar style — Catppuccin Mocha
    Палитра согласована с alacritty.toml и swaylock/config
+   Прямые hex-значения вместо CSS-переменных (GTK CSS их не поддерживает)
+
+   Catppuccin Mocha palette reference:
+   base    #1e1e2e  mantle  #181825  crust   #11111b
+   surface0 #313244  surface1 #45475a  surface2 #585b70
+   overlay0 #6c7086  overlay1 #7f849c  text    #cdd6f4
+   red     #f38ba8  green   #a6e3a1  yellow  #f9e2af
+   blue    #89b4fa  mauve   #cba6f7  sky     #89dceb
+   teal    #94e2d5  peach   #fab387  pink    #f5c2e7
    ============================================================================= */
 
-/* --------------------------------------------------------------------------
-   Переменные палитры Catppuccin Mocha
-   -------------------------------------------------------------------------- */
 * {
-  --base:    #1e1e2e;
-  --mantle:  #181825;
-  --crust:   #11111b;
-  --surface0: #313244;
-  --surface1: #45475a;
-  --surface2: #585b70;
-  --overlay0: #6c7086;
-  --overlay1: #7f849c;
-  --text:    #cdd6f4;
-  --subtext1: #bac2de;
-  --subtext0: #a6adc8;
-
-  --red:     #f38ba8;
-  --green:   #a6e3a1;
-  --yellow:  #f9e2af;
-  --blue:    #89b4fa;
-  --mauve:   #cba6f7;
-  --sky:     #89dceb;
-  --teal:    #94e2d5;
-  --peach:   #fab387;
-  --pink:    #f5c2e7;
-
   font-family: "JetBrainsMono Nerd Font", "Noto Sans", monospace;
   font-size: 13px;
   min-height: 0;
@@ -40,9 +24,9 @@
    Основная панель
    -------------------------------------------------------------------------- */
 window#waybar {
-  background-color: rgba(17, 17, 27, 0.92);  /* crust с прозрачностью */
-  color: var(--text);
-  border-bottom: 2px solid var(--surface0);
+  background-color: rgba(17, 17, 27, 0.92);
+  color: #cdd6f4;
+  border-bottom: 2px solid #313244;
   transition: background-color 0.3s ease;
 }
 
@@ -74,8 +58,8 @@ window#waybar.hidden {
   padding: 2px 10px;
   margin: 4px 2px;
   border-radius: 6px;
-  background-color: var(--surface0);
-  color: var(--text);
+  background-color: #313244;
+  color: #cdd6f4;
   transition: all 0.2s ease;
 }
 
@@ -91,28 +75,28 @@ window#waybar.hidden {
   padding: 2px 6px;
   margin: 2px 1px;
   border-radius: 5px;
-  color: var(--overlay1);
-  background-color: var(--surface0);
+  color: #7f849c;
+  background-color: #313244;
   border: none;
   min-width: 28px;
   transition: all 0.2s ease;
 }
 
 #workspaces button:hover {
-  background-color: var(--surface1);
-  color: var(--text);
+  background-color: #45475a;
+  color: #cdd6f4;
   box-shadow: none;
 }
 
 #workspaces button.active {
-  background-color: var(--blue);
-  color: var(--crust);
+  background-color: #89b4fa;
+  color: #11111b;
   font-weight: bold;
 }
 
 #workspaces button.urgent {
-  background-color: var(--red);
-  color: var(--crust);
+  background-color: #f38ba8;
+  color: #11111b;
 }
 
 /* --------------------------------------------------------------------------
@@ -120,7 +104,7 @@ window#waybar.hidden {
    -------------------------------------------------------------------------- */
 #window {
   background-color: transparent;
-  color: var(--subtext1);
+  color: #bac2de;
   font-style: italic;
   padding-left: 4px;
 }
@@ -135,8 +119,8 @@ window#waybar.hidden {
    Clock
    -------------------------------------------------------------------------- */
 #clock {
-  background-color: var(--mauve);
-  color: var(--crust);
+  background-color: #cba6f7;
+  color: #11111b;
   font-weight: bold;
   padding: 2px 14px;
 }
@@ -145,15 +129,15 @@ window#waybar.hidden {
    CPU
    -------------------------------------------------------------------------- */
 #cpu {
-  color: var(--green);
+  color: #a6e3a1;
 }
 
 #cpu.warning {
-  color: var(--yellow);
+  color: #f9e2af;
 }
 
 #cpu.critical {
-  color: var(--red);
+  color: #f38ba8;
   animation: pulse 1s infinite;
 }
 
@@ -161,15 +145,15 @@ window#waybar.hidden {
    Memory
    -------------------------------------------------------------------------- */
 #memory {
-  color: var(--sky);
+  color: #89dceb;
 }
 
 #memory.warning {
-  color: var(--yellow);
+  color: #f9e2af;
 }
 
 #memory.critical {
-  color: var(--red);
+  color: #f38ba8;
   animation: pulse 1s infinite;
 }
 
@@ -177,27 +161,27 @@ window#waybar.hidden {
    Disk
    -------------------------------------------------------------------------- */
 #disk {
-  color: var(--teal);
+  color: #94e2d5;
 }
 
 #disk.warning {
-  color: var(--yellow);
+  color: #f9e2af;
 }
 
 #disk.critical {
-  color: var(--red);
+  color: #f38ba8;
 }
 
 /* --------------------------------------------------------------------------
    Temperature
    -------------------------------------------------------------------------- */
 #temperature {
-  color: var(--peach);
+  color: #fab387;
 }
 
 #temperature.critical {
-  color: var(--red);
-  background-color: var(--surface0);
+  color: #f38ba8;
+  background-color: #313244;
   animation: pulse 1s infinite;
 }
 
@@ -205,33 +189,33 @@ window#waybar.hidden {
    Audio
    -------------------------------------------------------------------------- */
 #pulseaudio {
-  color: var(--mauve);
+  color: #cba6f7;
 }
 
 #pulseaudio.muted {
-  color: var(--overlay0);
+  color: #6c7086;
 }
 
 /* --------------------------------------------------------------------------
    Network
    -------------------------------------------------------------------------- */
 #network {
-  color: var(--blue);
+  color: #89b4fa;
 }
 
 #network.disconnected {
-  color: var(--red);
+  color: #f38ba8;
 }
 
 #network.linked {
-  color: var(--yellow);
+  color: #f9e2af;
 }
 
 /* --------------------------------------------------------------------------
    Language
    -------------------------------------------------------------------------- */
 #language {
-  color: var(--yellow);
+  color: #f9e2af;
   min-width: 44px;
 }
 
@@ -239,7 +223,7 @@ window#waybar.hidden {
    Tray
    -------------------------------------------------------------------------- */
 #tray {
-  background-color: var(--surface0);
+  background-color: #313244;
 }
 
 #tray > .passive {
@@ -248,32 +232,32 @@ window#waybar.hidden {
 
 #tray > .needs-attention {
   -gtk-icon-effect: highlight;
-  background-color: var(--red);
+  background-color: #f38ba8;
 }
 
 /* --------------------------------------------------------------------------
    Power button
    -------------------------------------------------------------------------- */
 #custom-power {
-  color: var(--red);
-  background-color: var(--surface0);
+  color: #f38ba8;
+  background-color: #313244;
   font-size: 15px;
   padding: 2px 12px;
 }
 
 #custom-power:hover {
-  background-color: var(--red);
-  color: var(--crust);
+  background-color: #f38ba8;
+  color: #11111b;
 }
 
 /* --------------------------------------------------------------------------
    Tooltip
    -------------------------------------------------------------------------- */
 tooltip {
-  background-color: var(--mantle);
-  border: 1px solid var(--surface1);
+  background-color: #181825;
+  border: 1px solid #45475a;
   border-radius: 6px;
-  color: var(--text);
+  color: #cdd6f4;
   font-size: 12px;
 }
 
@@ -289,3 +273,4 @@ tooltip label {
   50%  { opacity: 0.5; }
   100% { opacity: 1.0; }
 }
+
