@@ -1,4 +1,4 @@
-# Arch Linux + Niri + Waybar
+# Arch Linux + Niri
 
 Bootstrap-репозиторий для чистого Arch Linux.
 Стек: niri (tiling Wayland compositor) + Waybar + Alacritty + Catppuccin Mocha.
@@ -63,8 +63,8 @@ EOF
 ### 5. Клонирование репозитория
 
 ```bash
-git clone git@github.com:YOUR_USERNAME/arch-niri-waybar.git ~/Amar73/arch-niri-noctalia
-cd ~/Amar73/arch-niri-noctalia
+git clone git@github.com:YOUR_USERNAME/arch-niri.git ~/Amar73/arch-niri
+cd ~/Amar73/arch-niri
 chmod +x *.sh
 ```
 
