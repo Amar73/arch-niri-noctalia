@@ -56,13 +56,16 @@ install_official_packages() {
     brightnessctl playerctl \
     grim slurp \
     mesa vulkan-icd-loader \
-    qt6-wayland qt6-svg qt6-multimedia qt5-wayland \
+    qt6-wayland qt6-svg qt6-multimedia \
     qt6ct kvantum nwg-look \
     noto-fonts noto-fonts-cjk noto-fonts-emoji \
     ttf-jetbrains-mono-nerd \
     adw-gtk-theme papirus-icon-theme \
     xwayland-satellite \
     keychain openssh
+  # ИСПРАВЛЕНО v6.3: qt5-wayland убран из pacman-блока —
+  # в Arch 2026 он может быть частью qt5-base или отсутствовать как отдельный пакет.
+  # Ставится через yay в install_aur_packages() с защитой || true.
 }
 
 enable_system_services() {
@@ -82,6 +85,12 @@ install_aur_packages() {
   log "Установка AUR-пакетов (yay)"
   # bibata-cursor-theme — только в AUR
   yay -S --needed --noconfirm bibata-cursor-theme
+
+  # ИСПРАВЛЕНО v6.3: qt5-wayland перенесён сюда из pacman-блока.
+  # На Arch 2026 пакет может называться иначе или быть включён в qt5-base —
+  # поэтому || true: падение не должно ломать весь деплой.
+  yay -S --needed --noconfirm qt5-wayland 2>/dev/null \
+    || log "WARN: qt5-wayland не найден в AUR/extra — возможно уже в qt5-base, пропускаем"
 }
 
 backup_if_exists() {
@@ -112,7 +121,7 @@ deploy_files() {
   mkdir -p "${HOME}/.config"
 
   # ИСПРАВЛЕНО v6.3: добавлена защита перед rsync --delete.
-  # Пустой или несуществующий src при --delete выкосит весь ~/.config
+  # Пустой или несуществующий src при --delete уничтожал весь ~/.config
   local config_src="${FILES_DIR}/home/.config"
   [[ -d "$config_src" ]] \
     || die "Директория конфигов не найдена: $config_src"
@@ -149,6 +158,10 @@ print_summary() {
   make logs
   bash -n ~/.bashrc
   ssh -G github.com >/dev/null
+
+Диагностика раскладок waybar:
+  niri msg --json keyboard-layouts | jq .
+  niri msg event-stream | grep -i keyboard
 
 EOF
 }

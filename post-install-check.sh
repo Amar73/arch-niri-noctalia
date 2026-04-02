@@ -25,7 +25,6 @@ for pkg in \
   niri greetd greetd-tuigreet alacritty fuzzel mako waybar swayidle swaylock btop \
   wl-clipboard cliphist xdg-desktop-portal xdg-desktop-portal-wlr \
   qt6ct kvantum nwg-look noto-fonts papirus-icon-theme \
-  qt5-wayland \
   keychain openssh; do
   if pacman -Q "$pkg" >/dev/null 2>&1; then
     ok "package: $pkg"
@@ -34,10 +33,19 @@ for pkg in \
   fi
 done
 
+# ИСПРАВЛЕНО v6.3: qt5-wayland переведён в warn —
+# в Arch 2026 пакет может быть частью qt5-base или отсутствовать отдельно.
+# Падение не должно ломать check.
+echo
+echo "=== qt5-wayland (optional) ==="
+if pacman -Q qt5-wayland >/dev/null 2>&1; then
+  ok "package: qt5-wayland"
+else
+  warn "qt5-wayland не найден как отдельный пакет — возможно включён в qt5-base, это нормально"
+fi
 
 echo
 echo "=== AUR packages ==="
-# bibata-cursor-theme устанавливается через yay, pacman -Q его знает после установки
 pacman -Q bibata-cursor-theme >/dev/null 2>&1 \
   && ok "package: bibata-cursor-theme (AUR)" \
   || warn "package missing: bibata-cursor-theme — установи: yay -S bibata-cursor-theme"
@@ -97,4 +105,15 @@ if niri validate >/dev/null 2>&1; then
   ok "niri config valid"
 else
   fail "niri config invalid"
+fi
+
+echo
+echo "=== niri keyboard layouts ==="
+if niri msg --json keyboard-layouts >/dev/null 2>&1; then
+  niri msg --json keyboard-layouts | jq -r \
+    '"Layouts: " + ([.keyboard_layouts.layouts[].name] | join(", ")) +
+     "\nActive:  " + .keyboard_layouts.layouts[.keyboard_layouts.current_idx].name'
+  ok "keyboard-layouts IPC работает"
+else
+  warn "niri msg --json keyboard-layouts недоступен — запущен ли niri?"
 fi

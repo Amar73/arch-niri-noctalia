@@ -49,7 +49,6 @@
     "format": "  {}",
     "max-length": 60,
     "rewrite": {
-      // Убираем суффиксы типа " — Firefox" → просто заголовок вкладки
       "(.*) — (.*)": "$1",
       "(.*) - (.*)":  "$1"
     }
@@ -131,10 +130,23 @@
     "on-click": "alacritty -e nmtui"
   },
 
+  // --------------------------------------------------------------------------
+  // niri/language
+  //
+  // Waybar подставляет полное XKB-описание раскладки в format-"ИМЯ".
+  // Точные имена — из: niri msg --json keyboard-layouts | jq .
+  // Стандартные значения для us/ru: "English (US)" и "Russian".
+  //
+  // Если у тебя другие имена (например "English" без скобок) — замени ключи
+  // format-"English (US)" и format-"Russian" на то, что вернёт команда выше.
+  //
+  // Диагностика: niri msg event-stream | grep -i keyboard
+  // --------------------------------------------------------------------------
   "niri/language": {
-    "format": "󰌌 {}",
-    "format-en": "EN",
-    "format-ru": "RU"
+    "format-English (US)": "󰌌 EN",
+    "format-Russian":      "󰌌 RU",
+    "min-width": 56,
+    "tooltip": false
   },
 
   "tray": {
