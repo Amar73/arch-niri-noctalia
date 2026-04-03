@@ -33,11 +33,43 @@ sudo pacman -S --needed git rsync base-devel
 
 ### 3. SSH-ключ для GitHub
 
-#### Вариант А — есть доступ к интернету напрямую с машины
+#### Вариант A: GitHub CLI (рекомендуется)
+
+```bash
+gh auth login
+
+# Интерактивное меню — выбираем по порядку:
+#   What account do you want to log into?  → GitHub.com
+#   What is your preferred protocol?       → SSH
+#   Upload your SSH public key?            → ~/.ssh/id_ed25519.pub
+#   How would you like to authenticate?    → Login with a web browser
+#
+# На экране появится 8-значный код, например: ABCD-1234
+# Берёшь телефон → github.com/login/device → вводишь код → подтверждаешь
+# Ключ загружается автоматически.
+```
+
+#### Вариант B: curl + Personal Access Token
+
+```bash
+# На телефоне: github.com → Settings → Developer settings
+#              → Tokens (classic) → New → scope: admin:public_key → Generate
+GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
+
+curl -s -X POST \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     -H "Accept: application/vnd.github+json" \
+     https://api.github.com/user/keys \
+     -d "{\"title\":\"arch-$(hostname)\",\"key\":\"$(cat ~/.ssh/id_ed25519.pub)\"}"
+# Ответ JSON с полем "id" означает успех
+```
+
+
+#### Вариант C — есть доступ к интернету напрямую с машины
 
 ```bash
 # Сгенерировать ключ
-ssh-keygen -t ed25519 -C "you@email" -f ~/.ssh/id_ed25519
+ssh-keygen -t ed25519 -a 100 -C "you@email" -f ~/.ssh/id_ed25519
 
 # Скопировать публичный ключ в буфер
 cat ~/.ssh/id_ed25519.pub
@@ -52,7 +84,7 @@ ssh -T git@github.com
 # Ожидаемый ответ: "Hi Amar73! You've successfully authenticated..."
 ```
 
-#### Вариант Б — через USB-флешку с другого компьютера
+#### Вариант D — через USB-флешку с другого компьютера
 
 Если на новой машине нет браузера или удобного доступа к GitHub:
 
@@ -78,6 +110,11 @@ sudo umount /mnt/usb
 # 6. Вернуться на новую машину, проверить
 ssh -T git@github.com
 ```
+
+
+#### Вариант E: вручную с телефона
+
+Ключ ed25519 короткий (~68 символов после `ssh-ed25519 `). Смотришь на экран, вводишь на `github.com → Settings → SSH and GPG keys → New SSH key`.
 
 ### 4. /etc/hosts для SSH-инфраструктуры
 
