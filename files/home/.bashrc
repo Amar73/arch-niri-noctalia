@@ -164,13 +164,13 @@ alias grh='git reset --hard'
 # БЫСТРАЯ НАВИГАЦИЯ ПО ПРОЕКТАМ
 # =============================================================================
 
-alias cdconfig='cd ~/.config'
+alias cdconf='cd ~/.config'
 alias cddown='cd ~/Downloads'
 alias cddoc='cd ~/Documents'
 alias cdproj='cd ~/Amar73'
 alias cdniri='cd ~/.config/niri'
 alias cdwaybar='cd ~/.config/waybar'
-alias cddeb='cd ~/Amar73/debi3wm'
+alias cdsetup='cd ~/Amar73/setup'
 alias cdrclone='cd ~/Amar73/rclone'
 
 
