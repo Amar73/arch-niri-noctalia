@@ -129,9 +129,9 @@ alias rm='rm -I'
 alias df='df -h'
 alias du='du -ch'
 alias free='free -h'
-alias ps='ps auxf'
+alias psa='ps auxf'
 alias myip='curl -s ifconfig.me'
-alias ports='netstat -tulanp'
+alias ports='ss -tulanp'
 
 
 # =============================================================================
@@ -168,9 +168,8 @@ alias cdconfig='cd ~/.config'
 alias cddown='cd ~/Downloads'
 alias cddoc='cd ~/Documents'
 alias cdproj='cd ~/Amar73'
-alias cddwm='cd ~/.config/suckless/dwm'
-alias cddmenu='cd ~/.config/suckless/dmenu'
-alias cdslstatus='cd ~/.config/suckless/slstatus'
+alias cdniri='cd ~/.config/niri'
+alias cdwaybar='cd ~/.config/waybar'
 alias cddeb='cd ~/Amar73/debi3wm'
 alias cdrclone='cd ~/Amar73/rclone'
 
@@ -283,7 +282,6 @@ COLOR_YELLOW=$'\033[1;33m'
 COLOR_RESET=$'\033[0m'
 
 PS_CYAN='\[\033[0;36m\]'
-PS_GREEN='\[\033[0;32m\]'
 PS_BLUE='\[\033[0;34m\]'
 PS_YELLOW='\[\033[1;33m\]'
 PS_PURPLE='\[\033[0;35m\]'
@@ -322,10 +320,7 @@ last_command_status() {
 # ПРИГЛАШЕНИЕ КОМАНДНОЙ СТРОКИ (PS1)
 # =============================================================================
 
-# Расширенный PS1 с git-статусом и кодом возврата (раскомментировать):
-# PS1="${PS_CYAN}\t${PS_RESET} ${PS_PURPLE}\u${PS_RESET}@${PS_PURPLE}\h${PS_RESET}:${PS_BLUE}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
-
-PS1="${PS_CYAN}\t${PS_RESET} ${PS_GREEN}\u${PS_RESET}@${PS_BLUE}\h${PS_RESET}:${PS_YELLOW}\w${PS_RESET}\$ "
+PS1="${PS_CYAN}\t${PS_RESET} ${PS_PURPLE}\u${PS_RESET}@${PS_PURPLE}\h${PS_RESET}:${PS_BLUE}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
 
 
 # =============================================================================
@@ -486,15 +481,6 @@ if command -v systemctl >/dev/null 2>&1; then
         fi
     }
 
-    restart-dwm-services() {
-        local services=(flameshot nitrogen dunst sxhkd slstatus)
-        for s in "${services[@]}"; do
-            echo "Restarting $s..."
-            systemctl --user restart "$s" 2>/dev/null \
-                || echo "[WARN] Failed to restart $s"
-        done
-        echo "[OK] DWM services restarted"
-    }
 fi
 
 
