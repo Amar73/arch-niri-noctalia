@@ -134,12 +134,18 @@ EOF
 ### 5. Клонирование репозитория
 
 ```bash
-git clone git@github.com:Amar73/arch-niri.git ~/Amar73/arch-niri
+mkdir Amar73 && cd Amar73
+git clone git@github.com:Amar73/arch-niri.git
+```
+или
+```bash
+gh repo clone Amar73/arch-niri
 cd ~/Amar73/arch-niri
 chmod +x *.sh
 ```
 
 ### 6. Настройка git (первый раз на новой машине)
+**Если ssh ключ копировался на github.com через gh auth login, а репозиторий клонировался через gh repo clone нижеследующие действия скорее всего не потребуются**
 
 После клонирования нужно привязать git к аккаунту — иначе коммиты будут
 без автора и `git push` откажет:
