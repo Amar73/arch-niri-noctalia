@@ -33,7 +33,42 @@ sudo pacman -S --needed git rsync base-devel
 
 ### 3. SSH-ключ для GitHub
 
-#### Вариант А — есть доступ к интернету напрямую с машины
+#### Вариант 1: GitHub CLI (рекомендуется)
+
+```bash
+gh auth login
+
+# Интерактивное меню — выбираем по порядку:
+#   What account do you want to log into?  → GitHub.com
+#   What is your preferred protocol?       → SSH
+#   Upload your SSH public key?            → ~/.ssh/id_ed25519.pub
+#   How would you like to authenticate?    → Login with a web browser
+#
+# На экране появится 8-значный код, например: ABCD-1234
+# Берёшь телефон → github.com/login/device → вводишь код → подтверждаешь
+# Ключ загружается автоматически.
+```
+
+#### Вариант 2: curl + Personal Access Token
+
+```bash
+# На телефоне: github.com → Settings → Developer settings
+#              → Tokens (classic) → New → scope: admin:public_key → Generate
+GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
+
+curl -s -X POST \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     -H "Accept: application/vnd.github+json" \
+     https://api.github.com/user/keys \
+     -d "{\"title\":\"arch-$(hostname)\",\"key\":\"$(cat ~/.ssh/id_ed25519.pub)\"}"
+# Ответ JSON с полем "id" означает успех
+```
+
+#### Вариант 3: вручную с телефона
+
+Ключ ed25519 короткий (~68 символов после `ssh-ed25519 `). Смотришь на экран, вводишь на `github.com → Settings → SSH and GPG keys → New SSH key`.
+
+#### Вариант 4: — есть доступ к интернету напрямую с машины
 
 ```bash
 # Сгенерировать ключ
@@ -52,7 +87,7 @@ ssh -T git@github.com
 # Ожидаемый ответ: "Hi Amar73! You've successfully authenticated..."
 ```
 
-#### Вариант Б — через USB-флешку с другого компьютера
+#### Вариант 5: — через USB-флешку с другого компьютера
 
 Если на новой машине нет браузера или удобного доступа к GitHub:
 
@@ -78,6 +113,15 @@ sudo umount /mnt/usb
 # 6. Вернуться на новую машину, проверить
 ssh -T git@github.com
 ```
+## Проверяем соединение
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+# Должно ответить: Hi Amar73! You've successfully authenticated...
+ssh -T git@github.com
+```
 
 ### 4. /etc/hosts для SSH-инфраструктуры
 
@@ -97,12 +141,25 @@ EOF
 ### 5. Клонирование репозитория
 
 ```bash
-git clone git@github.com:Amar73/arch-niri.git ~/Amar73/arch-niri
+mkdir ~/Amar73
+cd ~/Amar73
+
+# github-cli
+gh repo clone Amar73/arch-niri
+
+# По SSH (рекомендуется, после настройки ключа)
+git clone git@github.com:Amar73/debi3wm.git
+
+# ИЛИ по HTTPS (если SSH ещё не работает) — setup.sh переключит remote
+git clone https://github.com/Amar73/debi3wm.git
+
 cd ~/Amar73/arch-niri
 chmod +x *.sh
 ```
 
 ### 6. Настройка git (первый раз на новой машине)
+
+**Если для копирования ключа и клонирования репозитория использовалась утилита github-cli, нижеописанные действия для настройки Git могут не потребоваться.**
 
 После клонирования нужно привязать git к аккаунту — иначе коммиты будут
 без автора и `git push` откажет:
