@@ -33,43 +33,11 @@ sudo pacman -S --needed git rsync base-devel
 
 ### 3. SSH-ключ для GitHub
 
-#### Вариант A: GitHub CLI (рекомендуется)
-
-```bash
-gh auth login
-
-# Интерактивное меню — выбираем по порядку:
-#   What account do you want to log into?  → GitHub.com
-#   What is your preferred protocol?       → SSH
-#   Upload your SSH public key?            → ~/.ssh/id_ed25519.pub
-#   How would you like to authenticate?    → Login with a web browser
-#
-# На экране появится 8-значный код, например: ABCD-1234
-# Берёшь телефон → github.com/login/device → вводишь код → подтверждаешь
-# Ключ загружается автоматически.
-```
-
-#### Вариант B: curl + Personal Access Token
-
-```bash
-# На телефоне: github.com → Settings → Developer settings
-#              → Tokens (classic) → New → scope: admin:public_key → Generate
-GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
-
-curl -s -X POST \
-     -H "Authorization: token $GITHUB_TOKEN" \
-     -H "Accept: application/vnd.github+json" \
-     https://api.github.com/user/keys \
-     -d "{\"title\":\"arch-$(hostname)\",\"key\":\"$(cat ~/.ssh/id_ed25519.pub)\"}"
-# Ответ JSON с полем "id" означает успех
-```
-
-
-#### Вариант C — есть доступ к интернету напрямую с машины
+#### Вариант А — есть доступ к интернету напрямую с машины
 
 ```bash
 # Сгенерировать ключ
-ssh-keygen -t ed25519 -a 100 -C "you@email" -f ~/.ssh/id_ed25519
+ssh-keygen -t ed25519 -C "a.maryanenko@gmail.com" -f ~/.ssh/id_ed25519
 
 # Скопировать публичный ключ в буфер
 cat ~/.ssh/id_ed25519.pub
@@ -84,13 +52,13 @@ ssh -T git@github.com
 # Ожидаемый ответ: "Hi Amar73! You've successfully authenticated..."
 ```
 
-#### Вариант D — через USB-флешку с другого компьютера
+#### Вариант Б — через USB-флешку с другого компьютера
 
 Если на новой машине нет браузера или удобного доступа к GitHub:
 
 ```bash
 # 1. На новой машине — сгенерировать ключ
-ssh-keygen -t ed25519 -a 100 -C "you@email" -f ~/.ssh/id_ed25519
+ssh-keygen -t ed25519 -C "a.maryanenko@gmail.com" -f ~/.ssh/id_ed25519
 
 # 2. Смонтировать USB-флешку (имя устройства узнать через lsblk)
 sudo mkdir -p /mnt/usb
@@ -111,11 +79,6 @@ sudo umount /mnt/usb
 ssh -T git@github.com
 ```
 
-
-#### Вариант E: вручную с телефона
-
-Ключ ed25519 короткий (~68 символов после `ssh-ed25519 `). Смотришь на экран, вводишь на `github.com → Settings → SSH and GPG keys → New SSH key`.
-
 ### 4. /etc/hosts для SSH-инфраструктуры
 
 Если используешь ProxyJump-цепочки из `.ssh/config` — хосты должны резолвиться.
@@ -134,25 +97,19 @@ EOF
 ### 5. Клонирование репозитория
 
 ```bash
-mkdir Amar73 && cd Amar73
-git clone git@github.com:Amar73/arch-niri.git
-```
-или
-```bash
-gh repo clone Amar73/arch-niri
+git clone git@github.com:Amar73/arch-niri.git ~/Amar73/arch-niri
 cd ~/Amar73/arch-niri
 chmod +x *.sh
 ```
 
 ### 6. Настройка git (первый раз на новой машине)
-**Если ssh ключ копировался на github.com через gh auth login, а репозиторий клонировался через gh repo clone нижеследующие действия скорее всего не потребуются**
 
 После клонирования нужно привязать git к аккаунту — иначе коммиты будут
 без автора и `git push` откажет:
 
 ```bash
-git config --global user.email "you@email"
-git config --global user.name "you name"
+git config --global user.email "a.maryanenko@gmail.com"
+git config --global user.name "Andrey Maryanenko"
 
 # Проверить
 git config --list | grep user
@@ -352,6 +309,12 @@ for f in /sys/class/hwmon/hwmon*/temp1_input; do echo "$f: $(cat $f)"; done
 | `Mod+V` | Cliphist picker |
 | `Print` | Скриншот области |
 | `Mod+Print` | Скриншот экрана |
+| `Shift+F1` | Mute/Unmute звук (wpctl) |
+| `Shift+F2` | Громкость −5% |
+| `Shift+F3` | Громкость +5% |
+| `Shift+F1` | Mute/unmute звук |
+| `Shift+F2` | Громкость −5% |
+| `Shift+F3` | Громкость +5% |
 | `XF86Audio*` | Громкость (wpctl) — закомментировано, раскомментировать в `50-binds.kdl` при появлении медиаклавиш |
 | `XF86Brightness*` | Яркость (brightnessctl) — закомментировано, раскомментировать в `50-binds.kdl` при появлении медиаклавиш |
 
