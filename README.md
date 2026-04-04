@@ -294,6 +294,30 @@ make outputs
 | `amar319-1.kdl` | amar319-1 | 1× 2560×1600 @ DVI-I-2 |
 | `default.kdl` | ноутбуки | auto/preferred |
 
+### Блокировка и таймауты простоя
+
+Управляется через `swayidle`. Схема таймаутов:
+
+| Время простоя | Действие |
+|---------------|----------|
+| 5 мин (300 с) | Блокировка экрана (swaylock) |
+| 10 мин (600 с) | Выключить мониторы |
+| 30 мин (1800 с) | Suspend системы |
+| При засыпании | Блокировка перед сном |
+| После пробуждения | Включить мониторы |
+
+Изменить таймауты:
+```bash
+nano ~/.config/systemd/user/swayidle.service
+systemctl --user daemon-reload
+systemctl --user restart swayidle.service
+```
+
+Проверить статус:
+```bash
+systemctl --user status swayidle.service
+```
+
 ### Waybar: раскладка клавиатуры
 
 Модуль `niri/language` использует полные XKB-имена. Проверить реальные:
@@ -354,6 +378,9 @@ for f in /sys/class/hwmon/hwmon*/temp1_input; do echo "$f: $(cat $f)"; done
 | `Mod+C` | Центрировать колонку |
 | `Mod+R` | Переключить пресет ширины |
 | `Mod+−/=` | Ширина колонки ±10% |
+| `Mod+L` | Заблокировать экран (swaylock) |
+| `Mod+Shift+L` | Выключить мониторы |
+| `Mod+Ctrl+L` | Заблокировать + выключить мониторы |
 | `Mod+V` | Cliphist picker |
 | `Print` | Скриншот области |
 | `Mod+Print` | Скриншот экрана |
