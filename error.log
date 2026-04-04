@@ -1,0 +1,8 @@
+● swayidle.service - Swayidle
+     Loaded: loaded (/home/amar/.config/systemd/user/swayidle.service; enabled; preset: enabled)
+     Active: activating (auto-restart) (Result: exit-code) since Sat 2026-04-04 13:59:53 UTC; 799ms ago
+ Invocation: 00b62ce68a1e44d493827aa0485202f2
+    Process: 1335 ExecStart=/usr/bin/swayidle -w timeout 300 /usr/bin/swaylock -f timeout 600 /usr/bin/niri msg action power-off-monitors before-sleep /usr/bin/swaylock -f (code=exited, status=253)
+   Main PID: 1335 (code=exited, status=253)
+   Mem peak: 2M
+        CPU: 8ms
