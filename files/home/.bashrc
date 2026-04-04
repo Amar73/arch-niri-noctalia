@@ -14,6 +14,10 @@
 # ЗАЩИТА ОТ НЕИНТЕРАКТИВНОЙ ОБОЛОЧКИ
 # =============================================================================
 
+# $- содержит флаги текущей оболочки. Флаг "i" присутствует только
+# в интерактивных сессиях. Если его нет — выходим немедленно.
+# Без этой строки bashrc будет выполняться в скриптах, что может
+# вызвать ошибки (например, alias ls='ls --color' в скрипте без терминала)
 [[ $- != *i* ]] && return
 
 
@@ -21,10 +25,24 @@
 # ИСТОРИЯ КОМАНД
 # =============================================================================
 
+# ignorespace — не сохранять команды, начинающиеся с пробела (удобно для паролей)
+# ignoredups  — не сохранять дубликаты подряд
+# erasedups   — удалять все предыдущие вхождения команды из истории
 HISTCONTROL=ignoreboth:erasedups
+
+# Количество команд, хранимых в памяти текущей сессии
 HISTSIZE=10000
+
+# Количество строк в файле ~/.bash_history на диске
 HISTFILESIZE=20000
+
+# Временная метка для каждой команды. Формат: "2025-01-15 14:32:01 "
+# Видна при: history | head; или при поиске через hgrep
 HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "
+
+# Сохранять историю в файл НЕМЕДЛЕННО после каждой команды,
+# а не только при завершении сессии. Без этого история теряется
+# при случайном закрытии терминала
 PROMPT_COMMAND='history -a'
 
 
@@ -32,10 +50,24 @@ PROMPT_COMMAND='history -a'
 # РАСШИРЕНИЯ BASH (shopt)
 # =============================================================================
 
+# Добавлять новые команды в конец .bash_history, а не перезаписывать файл.
+# Критично при работе в нескольких терминалах одновременно
 shopt -s histappend
+
+# Обновлять LINES и COLUMNS после каждой команды.
+# Без этого утилиты вроде vim или less неправильно определяют размер окна
+# после его изменения (resize)
 shopt -s checkwinsize
+
+# Исправлять опечатки в именах директорий при команде cd.
+# Пример: "cd Documetns" → автоматически исправит на "cd Documents"
 shopt -s cdspell
+
+# То же самое, но при Tab-автодополнении путей
 shopt -s dirspell
+
+# Переходить в директорию по одному имени без слова cd.
+# Пример: "~/Projects/myapp" вместо "cd ~/Projects/myapp"
 shopt -s autocd
 
 
@@ -44,11 +76,17 @@ shopt -s autocd
 # =============================================================================
 
 # --- Создание директории и немедленный переход в неё ---
+# Использование: mkcd my-project
+# mkdir -p создаёт все промежуточные директории (аналог mkdir --parents)
+# || return — если mkdir провалился, не пытаемся выполнить cd в несуществующую папку
 mkcd() {
     mkdir -p "$1" && cd "$1" || return
 }
 
 # --- Универсальное извлечение архивов ---
+# Использование: extract archive.tar.gz
+# Поддерживаемые форматы: tar.bz2, tar.gz, bz2, rar, gz, tar,
+#   tbz2, tgz, zip, Z, 7z, xz, exe (cab-архивы)
 extract() {
     if [ -f "$1" ]; then
         case $1 in
@@ -64,6 +102,7 @@ extract() {
             *.Z)         uncompress "$1"   ;;
             *.7z)        7z x "$1"         ;;
             *.xz)        unxz "$1"         ;;
+            # Windows-установщики часто упакованы как CAB-архивы
             *.exe)       cabextract "$1"   ;;
             *)           echo "extract: '$1' - unknown format" ;;
         esac
@@ -73,13 +112,26 @@ extract() {
 }
 
 # --- Поиск по истории команд ---
+# Использование: hgrep git  →  покажет все команды содержащие "git"
+# Передаёт все аргументы напрямую в grep, поэтому работают флаги:
+#   hgrep -i "docker run"   (без учёта регистра)
 hgrep() { history | grep "$@"; }
 
 # --- Быстрый поиск файлов по имени ---
+# Использование: ff config.yaml  →  найдёт все файлы с "config.yaml" в имени
+# 2>/dev/null — подавляет ошибки "Permission denied" для недоступных директорий
 ff() { find . -name "*$1*" 2>/dev/null; }
 
-# --- Поиск процессов ---
+# --- ИСПРАВЛЕНО: поиск процессов ---
+# Было: alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
+# Проблема: незакрытый флаг -e в конце делал алиас нерабочим —
+#   оболочка ждала ещё один аргумент, который никогда не приходил.
+#
+# Использование: psg nginx  →  покажет все процессы nginx
+# psg python3             →  все процессы python3
 psg() {
+    # -e VSZ — включить заголовок (строку с названиями колонок)
+    # -i     — поиск без учёта регистра
     ps aux | grep -v grep | grep -i -e VSZ -e "$@"
 }
 
@@ -93,6 +145,7 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ~='cd ~'
+# Возврат к предыдущей директории (аналог кнопки "назад")
 alias -- -='cd -'
 
 
@@ -100,14 +153,24 @@ alias -- -='cd -'
 # ЦВЕТНОЙ LS (через eza, если установлен)
 # =============================================================================
 
+# eza — современная замена ls с поддержкой иконок, git-статуса и цветов.
+# Установка: pacman -S eza  (Arch) / apt install eza  (Ubuntu 23.04+)
+# command -v проверяет наличие утилиты без создания лишнего процесса
 if command -v eza >/dev/null 2>&1; then
+    # --icons                  — иконки файлов (требует Nerd Font в терминале)
+    # --group-directories-first — директории всегда вверху списка
     alias ls='eza --icons --group-directories-first'
+    # -l — длинный формат, --header — заголовок колонок
     alias ll='eza -l --icons --group-directories-first --header'
+    # -a — показывать скрытые файлы (начинающиеся с точки)
     alias la='eza -la --icons --group-directories-first --header'
+    # --tree — древовидный вид, --level=2 — глубина 2 уровня
     alias lt='eza --tree --level=2 --icons'
     alias lta='eza --tree --level=2 --icons -a'
 else
+    # Стандартный ls с цветами — фоллбэк если eza не установлен
     alias ls='ls --color=auto --group-directories-first'
+    # -h — человекочитаемые размеры (K, M, G вместо байт)
     alias ll='ls -lh --color=auto --group-directories-first'
     alias la='ls -lah --color=auto --group-directories-first'
 fi
@@ -117,8 +180,12 @@ fi
 # БЕЗОПАСНЫЕ ВЕРСИИ ДЕСТРУКТИВНЫХ КОМАНД
 # =============================================================================
 
+# -i (interactive) — спрашивать подтверждение перед перезаписью
 alias cp='cp -i'
 alias mv='mv -i'
+# rm -I (заглавная I) — спрашивать только при удалении 3+ файлов или рекурсии.
+# Менее агрессивно чем -i (не спрашивает на каждый файл), но защищает от
+# случайного "rm -rf /important/path/*"
 alias rm='rm -I'
 
 
@@ -126,12 +193,20 @@ alias rm='rm -I'
 # МОНИТОРИНГ СИСТЕМЫ
 # =============================================================================
 
+# -h — human-readable: 1G вместо 1073741824
 alias df='df -h'
+# -c — итоговая строка в конце, -h — человекочитаемые размеры
 alias du='du -ch'
 alias free='free -h'
-alias ps='ps auxf'
+# auxf — все процессы всех пользователей в виде дерева (f = forest)
+alias psa='ps auxf'
+# Поиск процессов — теперь вынесен в функцию psg() выше
+
+# Узнать внешний IP-адрес машины через публичный сервис
 alias myip='curl -s ifconfig.me'
-alias ports='netstat -tulanp'
+
+# Список открытых портов и соединений
+alias ports='ss -tulanp'
 
 
 # =============================================================================
@@ -139,6 +214,9 @@ alias ports='netstat -tulanp'
 # =============================================================================
 
 alias gs='git status'
+# git add -A добавляет всё из КОРНЯ репозитория, а не только из текущей папки.
+# ИСПРАВЛЕНО: было "git add ." — это добавляло файлы только из текущей директории,
+# что приводило к пропуску изменений в других папках репозитория
 alias ga='git add -A'
 alias gc='git commit -m'
 
@@ -164,20 +242,22 @@ alias grh='git reset --hard'
 # БЫСТРАЯ НАВИГАЦИЯ ПО ПРОЕКТАМ
 # =============================================================================
 
-alias cdconfig='cd ~/.config'
+alias cdconf='cd ~/.config'
 alias cddown='cd ~/Downloads'
 alias cddoc='cd ~/Documents'
 alias cdproj='cd ~/Amar73'
-alias cddwm='cd ~/.config/suckless/dwm'
-alias cddmenu='cd ~/.config/suckless/dmenu'
-alias cdslstatus='cd ~/.config/suckless/slstatus'
-alias cddeb='cd ~/Amar73/debi3wm'
+alias cdniri='cd ~/.config/niri'
+alias cdwaybar='cd ~/.config/waybar'
+alias cdsetup='cd ~/Amar73/setup'
 alias cdrclone='cd ~/Amar73/rclone'
 
 
 # =============================================================================
 # ПАКЕТНЫЕ МЕНЕДЖЕРЫ
 # =============================================================================
+
+# Определяем дистрибутив по наличию ключевой команды и задаём удобные алиасы.
+# Порядок важен: NixOS проверяем ДО nix-env, так как на NixOS доступны обе команды
 
 if command -v pacman >/dev/null 2>&1; then
     alias search='pacman -Ss'
@@ -198,16 +278,16 @@ if command -v pacman >/dev/null 2>&1; then
         fi
     }
 
-    alias installed='pacman -Q'
+    alias installed='pacman -Q'    # список установленных пакетов
 
     # yay — AUR-хелпер
     if command -v yay >/dev/null 2>&1; then
         alias yaysearch='yay -Ss'
         alias yayinstall='yay -S'
         alias yayupdate='yay -Syu'
-        alias yayshow='yay -Qi'
+        alias yayshow='yay -Qi'         # информация об AUR-пакете
         alias yayremove='yay -Rns'
-        alias aurorphans='yay -Yc'
+        alias aurorphans='yay -Yc'       # удаление осиротевших AUR-пакетов
     fi
 
 elif command -v nixos-rebuild >/dev/null 2>&1; then
@@ -231,6 +311,9 @@ fi
 
 alias v='vim'
 alias sv='sudo vim'
+# $EDITOR — переменная окружения с именем предпочитаемого редактора.
+# Позволяет использовать один алиас "e" независимо от того, vim это,
+# nano или nvim (если изменить EDITOR ниже)
 alias e='$EDITOR'
 alias se='sudo $EDITOR'
 
@@ -238,6 +321,11 @@ alias se='sudo $EDITOR'
 # =============================================================================
 # РАСШИРЕНИЕ PATH
 # =============================================================================
+
+# Функция безопасного добавления директорий в PATH:
+#   1. Проверяет что директория существует
+#   2. Проверяет что она ещё не в PATH (избегает дублей)
+# Дубли в PATH замедляют поиск команд и могут вызвать путаницу
 
 add_to_path() {
     if [[ -d "$1" && ":$PATH:" != *":$1:"* ]]; then
@@ -250,15 +338,20 @@ add_to_path "$HOME/.local/bin"
 add_to_path "/usr/local/bin"
 add_to_path "/usr/local/go/bin"
 
+# Flutter SDK — добавляем в PATH только если установлен
 if [[ -d "/usr/lib/flutter" ]]; then
     add_to_path "/usr/lib/flutter/bin"
+    # Flutter использует Chromium для web-разработки и тестов
     export CHROME_EXECUTABLE=/usr/bin/chromium
 fi
 
+# Android SDK — добавляем только если установлен
 if [[ -d "$HOME/Android/Sdk" ]]; then
     export ANDROID_HOME="$HOME/Android/Sdk"
+    # ANDROID_SDK_ROOT — устаревший алиас для совместимости со старыми инструментами
     export ANDROID_SDK_ROOT="$ANDROID_HOME"
     add_to_path "$ANDROID_HOME/cmdline-tools/latest/bin"
+    # adb, fastboot и другие инструменты для работы с устройствами
     add_to_path "$ANDROID_HOME/platform-tools"
 fi
 
@@ -267,23 +360,33 @@ fi
 # ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
 # =============================================================================
 
+# VISUAL — полноэкранный редактор (используется в git commit, crontab -e и т.д.)
 export VISUAL=vim
+# EDITOR — построчный редактор (фоллбэк когда VISUAL недоступен)
 export EDITOR=vim
+# PAGER — программа для постраничного просмотра (man, git log, и т.д.)
 export PAGER=less
+# BROWSER — браузер по умолчанию (используется в xdg-open и некоторых CLI-утилитах)
 export BROWSER=firefox
-
 
 # =============================================================================
 # ЦВЕТОВЫЕ ПЕРЕМЕННЫЕ
 # =============================================================================
 
+# Два набора переменных для разных контекстов:
+
+# 1. Для использования в echo и printf внутри функций/скриптов
+#    Эти переменные содержат "голые" escape-последовательности
 COLOR_GREEN=$'\033[0;32m'
 COLOR_RED=$'\033[0;31m'
 COLOR_YELLOW=$'\033[1;33m'
 COLOR_RESET=$'\033[0m'
 
+# 2. Для использования в PS1 (приглашение командной строки)
+#    Escape-последовательности ОБЯЗАТЕЛЬНО обёрнуты в \[...\]
+#    Без этого bash неправильно считает длину строки, и курсор "прыгает"
+#    при редактировании длинных команд или навигации по истории
 PS_CYAN='\[\033[0;36m\]'
-PS_GREEN='\[\033[0;32m\]'
 PS_BLUE='\[\033[0;34m\]'
 PS_YELLOW='\[\033[1;33m\]'
 PS_PURPLE='\[\033[0;35m\]'
@@ -295,14 +398,22 @@ PS_RESET='\[\033[0m\]'
 # GIT-СТАТУС ДЛЯ ПРИГЛАШЕНИЯ (PS1)
 # =============================================================================
 
-# ВАЖНО: внутри функций вызываемых из PS1 через $() нужно использовать
+
+# Выводит имя текущей ветки и признак незакоммиченных изменений.
+# Вызывается из PS1 через $(...) при каждом показе приглашения.
+#
+# ВНИМАНИЕ: git rev-parse и git status вызываются при каждом нажатии Enter.
+# На очень больших репозиториях это может замедлить отображение приглашения.
+# В таком случае рассмотрите __git_ps1 из /usr/share/git/completion/git-prompt.sh
+
+# ИСПРАВЛЕНО: внутри функций вызываемых из PS1 через $() нужно использовать
 # \001 и \002 вместо \[ и \] — иначе bash неправильно считает длину строки
-# и курсор съезжает при навигации по истории.
+# и курсор съезжает при навигации по истории (команды наплывают друг на друга).
 
 git_status() {
     local branch
-    local RL=$'\001'   # аналог \[ — начало непечатаемой последовательности
-    local RR=$'\002'   # аналог \] — конец непечатаемой последовательности
+    local RL=$'\001'   # начало непечатаемой последовательности (аналог \[)
+    local RR=$'\002'   # конец непечатаемой последовательности (аналог \])
     if branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); then
         local changes
         changes=$(git status --porcelain 2>/dev/null)
@@ -314,6 +425,10 @@ git_status() {
     fi
 }
 
+
+# Выводит галочку (✓) или крестик с кодом (✗ 1) для последней команды.
+# Вызывается из PS1. Важно: $? должен быть считан ПЕРВЫМ в цепочке PS1,
+# иначе он перезапишется вызовом git_status
 last_command_status() {
     local status=$?
     local RL=$'\001'
@@ -330,9 +445,19 @@ last_command_status() {
 # ПРИГЛАШЕНИЕ КОМАНДНОЙ СТРОКИ (PS1)
 # =============================================================================
 
-# Формат: HH:MM:SS user@host:~/path (branch) ↵
+# Текущий PS1 — лаконичный и информативный:
+#   \t  — время (HH:MM:SS)
+#   \u  — имя пользователя
+#   \h  — имя хоста (до первой точки)
+#   \w  — текущая директория (~ вместо /home/user)
+#
+# Раскомментируйте строку ниже для расширенного PS1 с git-статусом и кодом возврата:
+# PS1="${PS_CYAN}\t${PS_RESET} ${PS_PURPLE}\u${PS_RESET}@${PS_PURPLE}\h${PS_RESET}:${PS_BLUE}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
+#
+# Текущий (краткий) вариант:
+# Формат: HH:MM:SS user@host:~/path (branch*)
 #         ✓ $
-PS1="${PS_CYAN}\t${PS_RESET} ${PS_GREEN}\u${PS_RESET}@${PS_BLUE}\h${PS_RESET}:${PS_YELLOW}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
+PS1="${PS_CYAN}\t${PS_RESET} ${PS_PURPLE}\u${PS_RESET}@${PS_PURPLE}\h${PS_RESET}:${PS_BLUE}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
 
 
 # =============================================================================
@@ -385,6 +510,9 @@ alias m02='ssh archminio02'
 # ФУНКЦИИ ПЕРЕДАЧИ ФАЙЛОВ ПО SSH
 # =============================================================================
 
+# Скачать файл с удалённого сервера
+# Использование: download_from_server arch05 /root/file.txt ~/Downloads/
+
 download_from_server() {
     if [[ $# -ne 3 ]]; then
         echo "Usage: download_from_server <host> <remote_path> <local_path>"
@@ -394,6 +522,9 @@ download_from_server() {
         && echo "[OK] Downloaded: $3" \
         || echo "[ERR] Download failed"
 }
+
+# Загрузить файл на удалённый сервер
+# Использование: upload_to_server arch05 ~/report.pdf /home/amar/
 
 upload_to_server() {
     if [[ $# -ne 3 ]]; then
@@ -409,28 +540,48 @@ upload_to_server() {
         || echo "[ERR] Upload failed"
 }
 
+# ЗАМЕЧАНИЕ по именованию: "scpto" семантически означает "scp to (куда)",
+# но назначен на download_from_server ("скачать С сервера").
+# Переименованы для ясности: get = скачать, put = отправить
 alias scpget='download_from_server'
 alias scpput='upload_to_server'
+# Старые алиасы оставлены для обратной совместимости
 alias scpto='download_from_server'
 alias putto='upload_to_server'
 
+# Примеры использования:
+#   ssh a03                                           — подключиться к arch03
+#   scpget arch05 /root/file.txt ~/Downloads/         — скачать файл
+#   scpget archminio01 /home/amar/data.txt ~/temp/    — скачать с minio
+#   scpput arch05 ~/report.pdf /home/amar/            — загрузить файл
+#   scpput archminio02 ~/backup.tar.gz /var/backups/  — загрузить на minio
 
 # =============================================================================
 # GIT — РАБОТА С ПРОЕКТАМИ
 # =============================================================================
 
+# Инициализировать новый git-репозиторий с базовой структурой
+# Использование: gitinit [имя-проекта]  (по умолчанию — имя текущей директории)
+
 gitinit() {
     local repo_name="${1:-$(basename "$PWD")}"
     git init
     echo "# $repo_name" > README.md
+    # Стандартный .gitignore для большинства проектов
+    # -e позволяет использовать \n как перенос строки
+    
     printf '.DS_Store\n*.log\n*.tmp\n*~\n.env\n__pycache__/\n' > .gitignore
     git add .
     git commit -m "Initial commit"
     echo "[OK] Git repo '$repo_name' initialized"
 }
 
+# Перейти в директорию проекта и показать начало README
+# Использование: project myapp
+# Без аргументов: показать список всех проектов
 project() {
     if [[ -z "$1" ]]; then
+        # ls возвращает 1 если директория не существует — в этом случае поясняем
         ls ~/Amar73/ 2>/dev/null || echo "~/Amar73/ not found - create it: mkdir ~/Amar73"
         return
     fi
@@ -438,6 +589,7 @@ project() {
     if [[ -d "$p" ]]; then
         cd "$p" || return 1
         echo ">> Project: $1"
+        # Показываем первые строки README если он есть — быстрый контекст
         [[ -f README.md ]] && head -5 README.md
     else
         echo "[ERR] Project '$1' not found in ~/Amar73/"
@@ -452,15 +604,22 @@ project() {
 # ДОПОЛНИТЕЛЬНЫЕ КОНФИГИ
 # =============================================================================
 
+# ~/.bashrc.local — настройки, специфичные для пользователя (не в git)
+# Пример: алиасы с паролями, рабочие токены и т.д.
 [[ -f ~/.bashrc.local ]] && source ~/.bashrc.local
+# ~/.bashrc.hostname — настройки, специфичные для этой машины
+# Пример: на сервере — не запускать ssh-agent; на рабочей машине — другой EDITOR
 [[ -f ~/.bashrc.$(hostname) ]] && source ~/.bashrc.$(hostname)
 
 
 # =============================================================================
 # ИНФОРМАЦИЯ О СИСТЕМЕ ПРИ ВХОДЕ
 # =============================================================================
-
+# Блок активируется только если переменная SHOW_SYSTEM_INFO=true
+# Установите в ~/.bashrc.local: export SHOW_SYSTEM_INFO=true
 if [[ "${SHOW_SYSTEM_INFO:-false}" == "true" ]]; then
+    # ИСПРАВЛЕНО: было $CYAN и $RESET — эти переменные не определены.
+    # Используем COLOR_GREEN и COLOR_RESET, которые определены выше
     echo -e "${COLOR_GREEN}=== System Info ===${COLOR_RESET}"
     echo -e "${COLOR_GREEN}System:${COLOR_RESET}  $(uname -sr)"
     echo -e "${COLOR_GREEN}Uptime:${COLOR_RESET}  $(uptime -p 2>/dev/null || uptime)"
@@ -481,6 +640,10 @@ if command -v systemctl >/dev/null 2>&1; then
     alias scs='systemctl status'
     alias scus='systemctl --user status'
 
+    # Просмотр логов службы
+    # Использование: logs nginx        — системная служба
+    #                logs dunst user   — пользовательская служба
+    #                logs dunst u      — сокращённая форма
     logs() {
         if [[ -z "$1" ]]; then
             echo "Usage: logs <service> [user|u]"
@@ -493,15 +656,6 @@ if command -v systemctl >/dev/null 2>&1; then
         fi
     }
 
-    restart-dwm-services() {
-        local services=(flameshot nitrogen dunst sxhkd slstatus)
-        for s in "${services[@]}"; do
-            echo "Restarting $s..."
-            systemctl --user restart "$s" 2>/dev/null \
-                || echo "[WARN] Failed to restart $s"
-        done
-        echo "[OK] DWM services restarted"
-    }
 fi
 
 
@@ -509,17 +663,26 @@ fi
 # ОТЛАДКА
 # =============================================================================
 
+# Для включения отладки запустите оболочку с:
+#   BASH_DEBUG=true bash
+# или добавьте в ~/.bashrc.local: export BASH_DEBUG=true
 [[ "${BASH_DEBUG:-false}" == "true" ]] && echo "[OK] .bashrc loaded"
 
 
 # =============================================================================
 # ПЕРЕЗАГРУЗКА BASHRC
 # =============================================================================
-
+# Применить изменения из .bashrc без перезапуска терминала.
+# ОГРАНИЧЕНИЕ: source не удаляет функции и алиасы, определённые
+# в предыдущей версии файла. Для полной чистоты используйте:
+#   exec bash  — заменить текущий процесс bash новым (теряет историю в памяти)
+#   exit + новый терминал — самый надёжный способ
 reload() {
     echo "Reloading .bashrc..."
+    # Сбрасываем все функции, определённые в этом файле, чтобы устаревшие
+    # версии не оставались в памяти после изменения файла
     unset -f git_status last_command_status reload mkcd extract hgrep ff psg \
              autoremove download_from_server upload_to_server gitinit project \
-             logs restart-dwm-services add_to_path gp gpf gl 2>/dev/null
+             logs add_to_path gp gpf gl 2>/dev/null
     source ~/.bashrc && echo "[OK] .bashrc reloaded"
 }
