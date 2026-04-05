@@ -24,7 +24,7 @@ command -v yay    >/dev/null 2>&1 || die "yay не найден — сначал
 read_pkgs() {
     local file="$1"
     [[ -f "$file" ]] || { echo ""; return; }
-    grep -v '^#' "$file" | grep -v '^$' | tr '\n' ' '
+    grep -v '^#' "$file" | grep -v '^$' | sed 's/#.*//' | tr -s ' \t' '\n' | grep -v '^$' | tr '\n' ' '
 }
 
 # Определяем какие файлы устанавливать
