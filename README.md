@@ -396,66 +396,32 @@ done
 
 ### Яндекс.Браузер: русский интерфейс
 
-На Linux Яндекс.Браузер берёт язык интерфейса из системной переменной `LANG`,
-а не из своих настроек. Если в системе `LANG=en_US.UTF-8` — интерфейс будет
-английским независимо от настроек браузера. Менять системный `LANG` не стоит —
-это сломает вывод CLI-утилит.
+На Linux Яндекс.Браузер берёт язык интерфейса из системной переменной `LANG`.
+Если в `/etc/locale.conf` прописан `LANG=en_US.UTF-8` — интерфейс будет
+английским независимо от настроек внутри браузера.
 
-Решение — запускать браузер с явной локалью через враппер.
+**Решение** — добавить русскую локаль в `/etc/locale.conf`:
+
+```bash
+echo "LANG=ru_RU.UTF-8" | sudo tee /etc/locale.conf
+```
+
+После этого перезагрузить компьютер — браузер (и все остальные приложения)
+будут на русском.
 
 > Бинарник на Arch называется `yandex-browser-stable`, не `yandex-browser`.
 
-**Шаг 1 — создать враппер:**
-
-```bash
-sudo tee /usr/local/bin/yandex-browser-ru > /dev/null << 'EOF'
-#!/bin/bash
-LANG=ru_RU.UTF-8 exec yandex-browser-stable "$@"
-EOF
-sudo chmod +x /usr/local/bin/yandex-browser-ru
-```
-
-**Шаг 2 — .desktop файл для Fuzzel:**
-
-```bash
-mkdir -p ~/.local/share/applications
-
-cat > ~/.local/share/applications/yandex-browser.desktop << 'EOF'
-[Desktop Entry]
-Version=1.0
-Name=Яндекс.Браузер
-Name[en]=Yandex Browser
-Comment=Быстрый и безопасный браузер
-Exec=sh -c "LANG=ru_RU.UTF-8 yandex-browser-stable %U"
-Icon=yandex-browser
-Terminal=false
-Type=Application
-Categories=Network;WebBrowser;
-MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
-StartupWMClass=Yandex-browser
-EOF
-
-update-desktop-database ~/.local/share/applications/
-```
-
-Файл в `~/.local/share/applications/` имеет приоритет над системным
-в `/usr/share/applications/` — Fuzzel подхватит автоматически.
-
-**Шаг 3 — биндинг в niri:**
-
-Добавить в `~/.config/niri/conf.d/50-binds.kdl`:
+Биндинг `Mod+B` в `50-binds.kdl` для быстрого запуска:
 
 ```kdl
-// Яндекс.Браузер с русским интерфейсом
-Mod+B { spawn "sh" "-c" "LANG=ru_RU.UTF-8 yandex-browser-stable"; }
+Mod+B { spawn "yandex-browser-stable"; }
 ```
 
-```bash
-niri msg action reload-config
-```
-
-После этого `Mod+B` открывает браузер с русским UI, а через Fuzzel он тоже
-запускается на русском.
+> Если нужен только русский UI приложений без изменения форматов CLI —
+> добавь в `~/.bashrc`:
+> ```bash
+> export LC_MESSAGES=ru_RU.UTF-8
+> ```
 
 ---
 
@@ -469,6 +435,7 @@ niri msg action reload-config
 |---------|----------|
 | `Mod+Return` | Открыть Alacritty (терминал) |
 | `Mod+D` | Открыть Fuzzel (лончер приложений) |
+| `Mod+B` | Яндекс.Браузер |
 | `Mod+Q` | Закрыть активное окно |
 | `Mod+Shift+E` | Выйти из niri (завершить сессию) |
 
