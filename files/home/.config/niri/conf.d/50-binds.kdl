@@ -91,6 +91,9 @@ binds {
     Shift+F2 { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
     Shift+F3 { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }
 
+    // Яндекс.Браузер с русским интерфейсом
+    Mod+B { spawn "sh" "-c" "LANG=ru_RU.UTF-8 yandex-browser"; }
+
     // -------------------------------------------------------------------------
     // Утилиты
     // -------------------------------------------------------------------------
