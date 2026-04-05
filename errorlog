@@ -1,0 +1,58 @@
+15:23:29 amar@amar319-1:~/Amar73/arch-niri (main)
+✓ $ ./install-packages.sh base
+
+[2026-04-05 15:23:51] Установка: base
+[sudo] password for amar:
+warning: wayland-1.24.0-1 is up to date -- skipping
+warning: xorg-xwayland-24.1.9-1 is up to date -- skipping
+warning: xdg-desktop-portal-1.20.3-2 is up to date -- skipping
+warning: xdg-desktop-portal-wlr-0.8.1-1 is up to date -- skipping
+warning: xdg-desktop-portal-gtk-1.15.3-1 is up to date -- skipping
+warning: xdg-utils-1.2.1-2 is up to date -- skipping
+warning: qt5-wayland-5.15.18+kde+r55-1 is up to date -- skipping
+warning: qt6-wayland-6.11.0-1 is up to date -- skipping
+warning: qt6-svg-6.11.0-2 is up to date -- skipping
+warning: qt6-multimedia-6.11.0-1 is up to date -- skipping
+warning: qt6ct-0.11-5 is up to date -- skipping
+warning: kvantum-1.1.6-1 is up to date -- skipping
+warning: nwg-look-1.0.6-1 is up to date -- skipping
+warning: adw-gtk-theme-6.4-1 is up to date -- skipping
+warning: ttf-jetbrains-mono-nerd-3.4.0-2 is up to date -- skipping
+warning: noto-fonts-1:2026.03.01-1 is up to date -- skipping
+warning: noto-fonts-cjk-20240730-1 is up to date -- skipping
+warning: noto-fonts-emoji-1:2.051-1 is up to date -- skipping
+warning: papirus-icon-theme-20250501-1 is up to date -- skipping
+warning: pipewire-1:1.6.2-1 is up to date -- skipping
+warning: pipewire-pulse-1:1.6.2-1 is up to date -- skipping
+warning: wireplumber-0.5.14-1 is up to date -- skipping
+warning: playerctl-2.4.1-5 is up to date -- skipping
+warning: pulsemixer-1.5.1-8 is up to date -- skipping
+warning: base-devel-1-2 is up to date -- skipping
+warning: polkit-gnome-0.105-12 is up to date -- skipping
+warning: openssh-10.2p1-2 is up to date -- skipping
+warning: keychain-2.9.8-1 is up to date -- skipping
+warning: unzip-6.0-23 is up to date -- skipping
+warning: pciutils-3.14.0-1 is up to date -- skipping
+warning: iproute2-6.19.0-2 is up to date -- skipping
+warning: networkmanager-1.56.0-1 is up to date -- skipping
+warning: inetutils-2.7-2 is up to date -- skipping
+warning: alacritty-0.16.1-1 is up to date -- skipping
+warning: fuzzel-1.14.1-1 is up to date -- skipping
+warning: mako-1.11.0-1 is up to date -- skipping
+warning: wl-clipboard-1:2.3.0-1 is up to date -- skipping
+warning: cliphist-1:0.7.0-2 is up to date -- skipping
+warning: grim-1.5.0-2 is up to date -- skipping
+warning: slurp-1.5.0-1 is up to date -- skipping
+warning: vim-9.2.0283-1 is up to date -- skipping
+error: target not found: #
+error: target not found: Мощный
+error: target not found: редактор
+error: target not found: от
+error: target not found: KDE,
+error: target not found: активно
+error: target not found: поддерживается
+warning: wget-1.25.0-3 is up to date -- skipping
+warning: curl-8.19.0-1 is up to date -- skipping
+warning: git-2.53.0-1 is up to date -- skipping
+warning: jq-1.8.1-1 is up to date -- skipping
+warning: btop-1.4.6-2 is up to date -- skipping
