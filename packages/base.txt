@@ -95,8 +95,10 @@ swappy
 
 # --- Браузеры и связь ---
 firefox
+firefox-i18n-ru
 telegram-desktop
 thunderbird
+thunderbird-i18n-ru
 
 # --- Текстовые редакторы ---
 vim
