@@ -299,15 +299,18 @@ PS_RESET='\[\033[0m\]'
 
 git_status() {
     local branch
-    local RL=$'\001'   # начало непечатаемой последовательности (аналог \[)
-    local RR=$'\002'   # конец непечатаемой последовательности (аналог \])
+    local RL=$'\001'        # начало непечатаемой последовательности
+    local RR=$'\002'        # конец непечатаемой последовательности
+    local YELLOW=$'\033[1;33m'
+    local GREEN=$'\033[0;32m'
+    local RESET=$'\033[0m'
     if branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); then
         local changes
         changes=$(git status --porcelain 2>/dev/null)
         if [[ -n $changes ]]; then
-            echo -n " ${RL}\033[1;33m${RR}(${branch}*)${RL}\033[0m${RR}"
+            echo -n " ${RL}${YELLOW}${RR}(${branch}*)${RL}${RESET}${RR}"
         else
-            echo -n " ${RL}\033[0;32m${RR}(${branch})${RL}\033[0m${RR}"
+            echo -n " ${RL}${GREEN}${RR}(${branch})${RL}${RESET}${RR}"
         fi
     fi
 }
@@ -316,10 +319,13 @@ last_command_status() {
     local status=$?
     local RL=$'\001'
     local RR=$'\002'
+    local GREEN=$'\033[0;32m'
+    local RED=$'\033[0;31m'
+    local RESET=$'\033[0m'
     if [[ $status -eq 0 ]]; then
-        echo -n "${RL}\033[0;32m${RR}✓${RL}\033[0m${RR}"
+        echo -n "${RL}${GREEN}${RR}✓${RL}${RESET}${RR}"
     else
-        echo -n "${RL}\033[0;31m${RR}✗${status}${RL}\033[0m${RR}"
+        echo -n "${RL}${RED}${RR}✗${status}${RL}${RESET}${RR}"
     fi
 }
 
