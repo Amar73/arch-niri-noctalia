@@ -54,8 +54,6 @@ pulsemixer
 base-devel
 accountsservice
 polkit-gnome
-xdg-utils
-xdg-user-dirs
 openssh
 keychain
 gvfs
@@ -122,6 +120,3 @@ htop
 
 # --- Docker ---
 docker
-
-# --- Безопасность ---
-keepassxc                        # Менеджер паролей

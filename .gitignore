@@ -1,0 +1,14 @@
+# Логи
+error.log
+*.log
+
+# Бэкапы dotfiles (создаются install.sh и sync.sh)
+*.bak.*
+
+# Временные файлы
+*.tmp
+*~
+.DS_Store
+
+# Бэкап-директории (создаются backup.sh)
+backup/

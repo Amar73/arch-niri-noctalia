@@ -241,6 +241,7 @@ make packages
 | Утилиты | `wget curl git eza duf ncdu rclone lazygit s-tui jq` |
 | Мониторинг | `btop htop` |
 | Docker | `docker` |
+| Безопасность | `keepassxc` |
 
 ### Содержимое aur.txt
 
