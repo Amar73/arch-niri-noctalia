@@ -403,12 +403,14 @@ done
 
 Решение — запускать браузер с явной локалью через враппер.
 
+> Бинарник на Arch называется `yandex-browser-stable`, не `yandex-browser`.
+
 **Шаг 1 — создать враппер:**
 
 ```bash
 sudo tee /usr/local/bin/yandex-browser-ru > /dev/null << 'EOF'
 #!/bin/bash
-LANG=ru_RU.UTF-8 exec yandex-browser "$@"
+LANG=ru_RU.UTF-8 exec yandex-browser-stable "$@"
 EOF
 sudo chmod +x /usr/local/bin/yandex-browser-ru
 ```
@@ -424,7 +426,7 @@ Version=1.0
 Name=Яндекс.Браузер
 Name[en]=Yandex Browser
 Comment=Быстрый и безопасный браузер
-Exec=sh -c "LANG=ru_RU.UTF-8 yandex-browser %U"
+Exec=sh -c "LANG=ru_RU.UTF-8 yandex-browser-stable %U"
 Icon=yandex-browser
 Terminal=false
 Type=Application
@@ -445,7 +447,7 @@ update-desktop-database ~/.local/share/applications/
 
 ```kdl
 // Яндекс.Браузер с русским интерфейсом
-Mod+B { spawn "sh" "-c" "LANG=ru_RU.UTF-8 yandex-browser"; }
+Mod+B { spawn "sh" "-c" "LANG=ru_RU.UTF-8 yandex-browser-stable"; }
 ```
 
 ```bash
