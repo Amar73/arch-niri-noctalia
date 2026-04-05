@@ -394,6 +394,67 @@ done
 - **Ctrl+Shift+C / Ctrl+Shift+V** → копировать / вставить
 - **Ctrl+клик по URL** → открыть в браузере
 
+### Яндекс.Браузер: русский интерфейс
+
+На Linux Яндекс.Браузер берёт язык интерфейса из системной переменной `LANG`,
+а не из своих настроек. Если в системе `LANG=en_US.UTF-8` — интерфейс будет
+английским независимо от настроек браузера. Менять системный `LANG` не стоит —
+это сломает вывод CLI-утилит.
+
+Решение — запускать браузер с явной локалью через враппер.
+
+**Шаг 1 — создать враппер:**
+
+```bash
+sudo tee /usr/local/bin/yandex-browser-ru > /dev/null << 'EOF'
+#!/bin/bash
+LANG=ru_RU.UTF-8 exec yandex-browser "$@"
+EOF
+sudo chmod +x /usr/local/bin/yandex-browser-ru
+```
+
+**Шаг 2 — .desktop файл для Fuzzel:**
+
+```bash
+mkdir -p ~/.local/share/applications
+
+cat > ~/.local/share/applications/yandex-browser.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Name=Яндекс.Браузер
+Name[en]=Yandex Browser
+Comment=Быстрый и безопасный браузер
+Exec=sh -c "LANG=ru_RU.UTF-8 yandex-browser %U"
+Icon=yandex-browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=Yandex-browser
+EOF
+
+update-desktop-database ~/.local/share/applications/
+```
+
+Файл в `~/.local/share/applications/` имеет приоритет над системным
+в `/usr/share/applications/` — Fuzzel подхватит автоматически.
+
+**Шаг 3 — биндинг в niri:**
+
+Добавить в `~/.config/niri/conf.d/50-binds.kdl`:
+
+```kdl
+// Яндекс.Браузер с русским интерфейсом
+Mod+B { spawn "sh" "-c" "LANG=ru_RU.UTF-8 yandex-browser"; }
+```
+
+```bash
+niri msg action reload-config
+```
+
+После этого `Mod+B` открывает браузер с русским UI, а через Fuzzel он тоже
+запускается на русском.
+
 ---
 
 ## Биндинги Niri
