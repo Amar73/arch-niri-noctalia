@@ -1,7 +1,20 @@
-15:23:29 amar@amar319-1:~/Amar73/arch-niri (main)
+15:26:03 amar@amar319-1:~/Amar73/arch-niri (main)
+✓ $ git pull
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 3 (delta 2), reused 3 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (3/3), 322 bytes | 322.00 KiB/s, done.
+From github.com:Amar73/arch-niri
+   db6fa34..97be57d  main       -> origin/main
+Updating db6fa34..97be57d
+Fast-forward
+ install-packages.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+15:29:28 amar@amar319-1:~/Amar73/arch-niri (main)
 ✓ $ ./install-packages.sh base
 
-[2026-04-05 15:23:51] Установка: base
+[2026-04-05 15:29:38] Установка: base
 [sudo] password for amar:
 warning: wayland-1.24.0-1 is up to date -- skipping
 warning: xorg-xwayland-24.1.9-1 is up to date -- skipping
@@ -44,15 +57,14 @@ warning: cliphist-1:0.7.0-2 is up to date -- skipping
 warning: grim-1.5.0-2 is up to date -- skipping
 warning: slurp-1.5.0-1 is up to date -- skipping
 warning: vim-9.2.0283-1 is up to date -- skipping
-error: target not found: #
-error: target not found: Мощный
-error: target not found: редактор
-error: target not found: от
-error: target not found: KDE,
-error: target not found: активно
-error: target not found: поддерживается
 warning: wget-1.25.0-3 is up to date -- skipping
 warning: curl-8.19.0-1 is up to date -- skipping
 warning: git-2.53.0-1 is up to date -- skipping
 warning: jq-1.8.1-1 is up to date -- skipping
 warning: btop-1.4.6-2 is up to date -- skipping
+resolving dependencies...
+looking for conflicting packages...
+:: pipewire-jack-1:1.6.2-1 and jack2-1.9.22-2 are in conflict (jack). Remove jack2? [y/N]
+error: unresolvable package conflicts detected
+error: failed to prepare transaction (conflicting dependencies)
+:: pipewire-jack-1:1.6.2-1 and jack2-1.9.22-2 are in conflict
