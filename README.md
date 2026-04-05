@@ -338,7 +338,7 @@ nano ~/.config/niri/conf.d/40-startup.kdl
 # Числа — время в секундах: 300 = 5 мин, 600 = 10 мин
 
 # Применить (перезапускает swayidle)
-niri msg action reload-config
+niri msg action load-config-file
 ```
 
 Проверить что swayidle запущен:

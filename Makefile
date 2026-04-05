@@ -30,7 +30,7 @@ validate:
 	niri validate
 
 reload:
-	niri msg action reload-config || true
+	niri msg action load-config-file || true
 
 update:
 	./update.sh

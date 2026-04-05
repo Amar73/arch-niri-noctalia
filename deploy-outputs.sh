@@ -42,7 +42,7 @@ echo "[OK] Deployed: $SRC → $TARGET"
 
 # Валидация если niri доступен
 if command -v niri >/dev/null 2>&1 && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-    niri msg action reload-config 2>/dev/null \
+    niri msg action load-config-file 2>/dev/null \
         && echo "[OK] niri config reloaded" \
         || echo "[WARN] niri reload failed — перезайди в сессию"
 else
