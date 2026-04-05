@@ -1,6 +1,6 @@
 ---
 # ArchLinux- Installation guide
-
+### https://wiki.archlinux.org/title/Installation_guide_(%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9)
 ## Создание загрузочного USB
 
 **Важно:** Это уничтожит безвозвратно все файлы на `/dev/**sdx**`. Чтобы восстановить USB-накопитель как пустое, пригодное для использования запоминающее устройство после использования ISO-образа Arch, необходимо удалить подпись файловой системы ISO 9660, выполнив `wipefs --all /dev/**sdx**` от суперпользователя, перед [разметкой] и [форматированием].
@@ -8,11 +8,6 @@
 ```bash
 dd bs=4M if=путь/до/archlinux.iso of=/dev/sdx status=progress oflag=sync
 ```
-или с помощью утилиты pv (показывает прогресс в реальном времени)
-```bash
-sudo pv путь/до/archlinux.iso | sudo dd bs=4M of=/dev/sdx status=progress oflag=sync
-```
-
 ---
 
 ### Загрузка live-окружения
@@ -152,8 +147,6 @@ timedatectl status
 | `[SWAP]`                | `/dev/*раздел_подкачки*`       | Linux swap             | Не менее 4 ГиБ             |
 | `/`                     | `/dev/*корневой_раздел*`       | Linux                  | Остаток, минимум 23–32 ГиБ |
 
-Также смотрите [Разметка дисков#Примеры схем](https://wiki.archlinux.org/title/%D0%A0%D0%B0%D0%B7%D0%BC%D0%B5%D1%82%D0%BA%D0%B0_%D0%B4%D0%B8%D1%81%D0%BA%D0%BE%D0%B2#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80%D1%8B_%D1%81%D1%85%D0%B5%D0%BC "Разметка дисков").
-
 ### Форматирование разделов
 
 После создания разделов их нужно отформатировать в подходящую [файловую систему].
@@ -206,9 +199,9 @@ timedatectl status
 
 В дальнейшем [genfstab] обнаружит смонтированные файловые системы и пространство подкачки.
 
-# В моем случае установлено два диска. Первый sdd /dev/sda- на нем boot и root. Второй hdd /dev/sdb- на нем home и data.
+# В моем случае установлено два диска. Первый sdd /dev/sda- на нем boot, swap и root. Второй hdd /dev/sdb- на нем home и data.
 
-⚠️ **Форматируем только root (`/dev/sda3`).** `/dev/sdb1` и `/dev/sdb2` не трогаем.
+⚠️ **Форматируем только boot (`/dev/sda1`) и root (`/dev/sda3`).** `/dev/sdb1` и `/dev/sdb2` не трогаем.
 
 ```bash
 # Форматируем только корень (если нужна чистая установка)
@@ -218,7 +211,7 @@ mkswap /dev/sda2
 swapon /dev/sda2
 
 # Монтируем корень
-mount /dev/sda2 /mnt
+mount /dev/sda3 /mnt
 
 # Монтируем ESP
 mkdir -p /mnt/boot/efi
@@ -275,7 +268,7 @@ findmnt -R /mnt
 Пример команды для базовой установки с [ядром] Linux и прошивками для часто встречающихся устройств:
 
 ```bash
-pacstrap -K /mnt base linux linux-firmware sudo  vim git github-cli base-devel networkmanager man-db man-pages texinfo dbus polkit inetutils openssh
+pacstrap -K /mnt base linux linux-firmware sudo  vim git github-cli base-devel networkmanager man-db man-pages texinfo dbus polkit inetutils openssh mc
 ```
 
 **Совет**
@@ -372,7 +365,7 @@ LC_COLLATE=C
 /etc/vconsole.conf
 ```
 ```ini
-KEYMAP=su
+KEYMAP=us
 FONT=cyr-sun16
 ```
 
