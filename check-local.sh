@@ -52,6 +52,7 @@ expected_files=(
   "home/.config/niri/conf.d/30-environment.kdl"
   "home/.config/niri/conf.d/40-startup.kdl"
   "home/.config/niri/conf.d/50-binds.kdl"
+  "home/.config/niri/conf.d/60-outputs.kdl"
   "home/.config/niri/conf.d/keymap.xkb"
   "home/.config/alacritty/alacritty.toml"
   "home/.config/waybar/config.jsonc"
