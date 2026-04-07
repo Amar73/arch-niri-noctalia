@@ -106,7 +106,10 @@ echo "=== niri keyboard layouts ==="
 if niri msg --json keyboard-layouts >/dev/null 2>&1; then
   _kl_json="$(niri msg --json keyboard-layouts 2>/dev/null)"
   _kl_out="$(echo "$_kl_json" | jq -r '
-    if .keyboard_layouts != null and .keyboard_layouts.layouts != null then
+    if .names != null then
+      "Layouts: " + (.names | join(", ")) +
+      "\nActive:  " + (.names[.current_idx] // "?")
+    elif .keyboard_layouts != null and .keyboard_layouts.layouts != null then
       "Layouts: " + ([.keyboard_layouts.layouts[].name] | join(", ")) +
       "\nActive:  " + (.keyboard_layouts.layouts[.keyboard_layouts.current_idx].name // "?")
     else
