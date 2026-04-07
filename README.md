@@ -280,10 +280,38 @@ make packages
 | `make outputs` | Деплой конфига мониторов по hostname из `outputs/` |
 | `make validate` | Валидация niri config через `niri validate` |
 | `make reload` | Reload niri config без перезапуска сессии |
+| `make ssh-config` | Деплой `~/.ssh/config` в зависимости от hostname |
 
 ---
 
 ## Настройка после установки
+
+### SSH config: контекстный деплой
+
+Файл `~/.ssh/config` содержит ProxyJump-цепочки через `amar224` как jump-хост.
+Проблема: если запустить `make sync` на самой `amar224` — конфиг попытается
+сделать `ProxyJump amar224` с `amar224`, что невозможно.
+
+Скрипт `deploy-ssh-config.sh` решает это автоматически:
+
+| Hostname | Контекст | wn75 подключается через |
+|----------|----------|------------------------|
+| `amar224` | jump_host | напрямую по IP |
+| `amar319`, `amar319-1`, ноутбуки | home_net | ProxyJump amar224 |
+| всё остальное | external | конфиг не трогается |
+
+```bash
+# Применить правильный конфиг для текущей машины
+make ssh-config
+
+# Посмотреть что будет задеплоено без применения
+./deploy-ssh-config.sh --dry-run
+```
+
+Скрипт запускается автоматически при `make install` и `make sync`.
+
+> **Важно:** для работы ProxyJump имена хостов (`amar`, `wn75`, `ui`) должны
+> резолвиться через `/etc/hosts` или DNS. Без этого первый прыжок упадёт.
 
 ### Мониторы
 
@@ -716,6 +744,7 @@ arch-niri/
 ├── install.sh                      — полная установка с нуля
 ├── install-packages.sh             — установка пакетов из packages/
 ├── deploy-outputs.sh               — деплой конфига мониторов по hostname
+├── deploy-ssh-config.sh            — деплой ~/.ssh/config по контексту машины
 ├── check-local.sh                  — проверка без pacman/systemctl
 ├── post-install-check.sh           — полная проверка на живой системе
 ├── sync.sh                         — синхронизация конфигов + smoke-check

@@ -148,6 +148,10 @@ deploy_files() {
   # Деплой конфига мониторов по hostname
   log "Деплой конфига мониторов"
   bash "${ROOT_DIR}/deploy-outputs.sh"
+
+  # Деплой ssh config по контексту машины
+  log "Деплой ssh config"
+  bash "${ROOT_DIR}/deploy-ssh-config.sh"
 }
 
 enable_user_services() {

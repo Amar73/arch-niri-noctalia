@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: install check check-local sync logs backup dots dots-local validate reload update outputs packages
+.PHONY: install check check-local sync logs backup dots dots-local validate reload update outputs packages ssh-config
 
 install:
 	./install.sh
@@ -40,3 +40,6 @@ outputs:
 
 packages:
 	./install-packages.sh
+
+ssh-config:
+	./deploy-ssh-config.sh

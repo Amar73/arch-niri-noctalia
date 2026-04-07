@@ -78,6 +78,9 @@ niri validate || true
 echo "[*] Deploy outputs config"
 bash "${ROOT_DIR}/deploy-outputs.sh"
 
+echo "[*] Deploy ssh config"
+bash "${ROOT_DIR}/deploy-ssh-config.sh"
+
 echo "[*] Validate bashrc"
 bash -n "$HOME/.bashrc"
 
