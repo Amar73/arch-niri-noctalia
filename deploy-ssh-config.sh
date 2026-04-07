@@ -96,16 +96,16 @@ fi
 # Остальные блоки одинаковые для всех домашних машин
 if [[ "$CONTEXT" == "jump_host" ]]; then
     # На amar224 не нужен блок самого себя
+    # wn75, ui, archminio — прямые подключения (ProxyJump через себя невозможен)
     COMMON_BLOCKS="Host arch03 arch04 arch05
     HostName %h
     User root
     ProxyJump wn75
 
 Host ui
-    HostName ui
+    HostName 144.206.226.197
     User amar
     Port 7890
-    ProxyJump amar224
 
 Host archminio01 archminio02
     HostName %h
