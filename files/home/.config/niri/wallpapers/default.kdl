@@ -1,0 +1,4 @@
+// Обои по умолчанию — ноутбуки и неизвестные хосты
+// Деплоится автоматически deploy-outputs.sh по hostname
+
+spawn-at-startup "swaybg" "-i" "/home/amar/Amar73/arch-niri/Wallpapers/arch.jpeg" "-m" "fill"

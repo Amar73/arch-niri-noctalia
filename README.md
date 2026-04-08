@@ -148,8 +148,9 @@ make logs     # просмотр логов всех сервисов текущ
 10. **Деплой `.bashrc` и `.ssh/config`** — с бэкапом существующих файлов
     (добавляется суффикс `.bak.TIMESTAMP`).
 
-11. **Деплой конфига мониторов** — `deploy-outputs.sh` определяет hostname,
-    копирует нужный `outputs/hostname.kdl` в `conf.d/60-outputs.kdl`.
+11. **Деплой конфигов мониторов и обоев** — `deploy-outputs.sh` определяет hostname,
+    копирует нужный `outputs/hostname.kdl` в `conf.d/60-outputs.kdl`
+    и `wallpapers/hostname.kdl` в `conf.d/45-wallpaper.kdl`.
 
 12. **Включение user-сервисов** — `swayidle` (таймауты блокировки),
     `cliphist-text` и `cliphist-images` (история буфера обмена).
@@ -349,6 +350,47 @@ nano files/home/.config/niri/outputs/$(hostname).kdl
 
 # Применить
 make outputs
+```
+
+### Обои (per-output)
+
+Обои деплоятся автоматически при `make install` / `make sync` через `deploy-outputs.sh`
+— каждый монитор получает свой wallpaper через `swaybg -o <output>`.
+
+Файлы обоев в репо:
+
+| Файл | Машина | Конфигурация |
+|------|--------|--------------|
+| `amar224.kdl` | amar224 | DP-2: arch.jpeg / DP-3: arch3.jpeg / DP-4: wallpaper.jpg |
+| `amar319.kdl` | amar319 | DVI-I-1: arch.jpeg / HDMI-A-1: arch3.jpeg |
+| `amar319-1.kdl` | amar319-1 | DVI-I-2: wallpaper.jpg |
+| `default.kdl` | ноутбуки, прочие | один монитор без `-o` флага |
+
+Обои хранятся в `Wallpapers/` внутри репозитория:
+
+```
+Wallpapers/
+├── arch.jpeg
+├── arch3.jpeg
+├── archlinux-commands.jpg
+└── wallpaper.jpg
+```
+
+Путь в kdl-файлах: `/home/amar/Amar73/arch-niri/Wallpapers/<file>`.
+
+Сменить обои вручную (без перезапуска niri):
+```bash
+pkill swaybg
+swaybg -o DP-2 -i ~/Amar73/arch-niri/Wallpapers/arch.jpeg -m fill &
+swaybg -o DP-3 -i ~/Amar73/arch-niri/Wallpapers/arch3.jpeg -m fill &
+swaybg -o DP-4 -i ~/Amar73/arch-niri/Wallpapers/wallpaper.jpg -m fill &
+```
+
+Добавить обои для новой машины:
+```bash
+niri msg outputs   # узнать имена выходов
+nano files/home/.config/niri/wallpapers/$(hostname).kdl
+make outputs       # задеплоить
 ```
 
 ### Блокировка и таймауты простоя
@@ -756,6 +798,7 @@ arch-niri/
 │   ├── base.txt                    — базовые пакеты (все машины)
 │   ├── niri.txt                    — пакеты niri-стека
 │   └── aur.txt                     — пакеты из AUR
+├── Wallpapers/                     — обои (путь используется в wallpapers/*.kdl)
 └── files/
     ├── etc/greetd/config.toml      — конфиг display manager
     └── home/
@@ -768,15 +811,21 @@ arch-niri/
             │   │   ├── 10-input.kdl        — клавиатура, тачпад, мышь
             │   │   ├── 20-layout.kdl       — gaps, ширина колонок
             │   │   ├── 30-environment.kdl  — Wayland env переменные
-            │   │   ├── 40-startup.kdl      — автозапуск: waybar, mako, swaybg, swayidle
+            │   │   ├── 40-startup.kdl      — автозапуск: waybar, mako, swayidle
+            │   │   ├── 45-wallpaper.kdl    — ← создаётся deploy-outputs.sh (swaybg per-output)
             │   │   ├── 50-binds.kdl        — биндинги клавиш
-            │   │   ├── 60-outputs.kdl      — ← создаётся deploy-outputs.sh
+            │   │   ├── 60-outputs.kdl      — ← создаётся deploy-outputs.sh (мониторы)
             │   │   └── keymap.xkb          — Alt_L=EN, Alt_R=RU
-            │   └── outputs/
-            │       ├── amar224.kdl         — 3× 1920×1080 @ DP-2, DP-3, DP-4
-            │       ├── amar319.kdl         — 2× 1920×1080 @ DVI-I-1, HDMI-A-1
-            │       ├── amar319-1.kdl       — 1× 2560×1600 @ DVI-I-2
-            │       └── default.kdl         — auto для ноутбуков
+            │   ├── outputs/
+            │   │   ├── amar224.kdl         — 3× 1920×1080 @ DP-2, DP-3, DP-4
+            │   │   ├── amar319.kdl         — 2× 1920×1080 @ DVI-I-1, HDMI-A-1
+            │   │   ├── amar319-1.kdl       — 1× 2560×1600 @ DVI-I-2
+            │   │   └── default.kdl         — auto для ноутбуков
+            │   └── wallpapers/
+            │       ├── amar224.kdl         — DP-2/DP-3/DP-4 → arch/arch3/wallpaper
+            │       ├── amar319.kdl         — DVI-I-1/HDMI-A-1
+            │       ├── amar319-1.kdl       — DVI-I-2
+            │       └── default.kdl         — один монитор
             ├── alacritty/alacritty.toml    — терминал: Catppuccin Mocha
             ├── swaylock/config             — блокировщик: Catppuccin Mocha
             ├── waybar/
