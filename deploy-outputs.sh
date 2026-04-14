@@ -60,7 +60,6 @@ echo "[OK] Deployed: $SRC_WP → ${TARGET_DIR}/45-wallpaper.kdl"
 
 # Валидация если niri доступен
 if command -v niri >/dev/null 2>&1 && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-    pkill swaybg 2>/dev/null || true
     niri msg action load-config-file 2>/dev/null \
         && echo "[OK] niri config reloaded" \
         || echo "[WARN] niri reload failed — перезайди в сессию"
