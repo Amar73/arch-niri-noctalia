@@ -56,6 +56,7 @@ accountsservice
 polkit-gnome
 openssh
 keychain
+numlockx
 gvfs
 unzip
 tree
@@ -103,7 +104,6 @@ thunderbird-i18n-ru
 # --- Текстовые редакторы ---
 vim
 kate                           # Мощный редактор от KDE, активно поддерживается
-code                           # Мощный редактор кода от Microsoft, активно поддерживается
 
 # --- Утилиты командной строки ---
 wget
@@ -126,7 +126,3 @@ docker
 
 # --- Безопасность ---
 keepassxc
-
-# --- Заметки ---
-obsidian
-obsidian-icon-theme

@@ -1,0 +1,8 @@
+#!/bin/bash
+# set-wallpapers — обои для amar224 (3 монитора DP-2, DP-3, DP-4)
+# Создан автоматически install.sh / sync.sh
+pkill swaybg 2>/dev/null || true
+exec swaybg \
+  -o DP-2 -i /home/amar/Amar73/arch-niri/Wallpapers/arch.jpeg    -m fill \
+  -o DP-3 -i /home/amar/Amar73/arch-niri/Wallpapers/arch3.jpeg   -m fill \
+  -o DP-4 -i /home/amar/Amar73/arch-niri/Wallpapers/wallpaper.jpg -m fill

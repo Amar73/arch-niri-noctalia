@@ -183,6 +183,7 @@ make logs     # просмотр логов всех сервисов текущ
 | Greeter | `greetd greetd-tuigreet` |
 | Сеть | `networkmanager seatd` |
 | SSH | `openssh keychain` |
+| NumLock | `numlockx` |
 | Диагностика | `btop jq` |
 | AUR | `bibata-cursor-theme qt5-wayland` |
 
@@ -297,7 +298,7 @@ make packages
 
 | Hostname | Контекст | wn75 подключается через |
 |----------|----------|------------------------|
-| `amar224` | jump_host | напрямую по IP |
+| `amar224` | jump_host | напрямую (из /etc/hosts) |
 | `amar319`, `amar319-1`, ноутбуки | home_net | ProxyJump amar224 |
 | всё остальное | external | конфиг не трогается |
 

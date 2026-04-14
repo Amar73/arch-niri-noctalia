@@ -75,6 +75,13 @@ fi
 echo "[*] Validate niri config"
 niri validate || true
 
+# set-wallpapers wrapper (amar224-specific)
+if [[ -f "${ROOT_DIR}/files/home/.local/bin/set-wallpapers" ]]; then
+  mkdir -p "${HOME}/.local/bin"
+  install -m 755 "${ROOT_DIR}/files/home/.local/bin/set-wallpapers" "${HOME}/.local/bin/set-wallpapers"
+  echo "[OK] set-wallpapers задеплоен"
+fi
+
 echo "[*] Deploy outputs config"
 bash "${ROOT_DIR}/deploy-outputs.sh"
 
