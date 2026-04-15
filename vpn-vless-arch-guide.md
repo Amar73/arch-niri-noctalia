@@ -113,20 +113,45 @@ xray version
           "ytimg.com",
           "googlevideo.com",
           "yt3.ggpht.com",
+
           "gemini.google.com",
           "notebooklm.google.com",
+          "aistudio.google.com",
+
           "chatgpt.com",
           "openai.com",
+          "oaistatic.com",
+          "oaiusercontent.com",
+          "auth.openai.com",
+
           "claude.ai",
           "anthropic.com",
+          "api.anthropic.com",
+
           "github.com",
-          "copilot.github.com"
+          "api.github.com",
+          "copilot.github.com",
+          "githubcopilot.com",
+          "github.githubassets.com",
+          "raw.githubusercontent.com",
+
+          "vscode.dev",
+          "marketplace.visualstudio.com",
+          "update.code.visualstudio.com",
+          "vscode-cdn.net",
+          "gallery.vsassets.io",
+          "obsidian.md",
+          "api.obsidian.md",
+          "releases.obsidian.md",
+          "regexp:sync-\\d+\\.obsidian\\.md"
         ],
         "outboundTag": "proxy"
       },
       {
         "type": "field",
         "ip": [
+          "1.1.1.1",
+          "8.8.8.8",
           "geoip:private"
         ],
         "outboundTag": "direct"
@@ -398,7 +423,13 @@ sudo systemctl status x-ui | head -5
   "marketplace.visualstudio.com",
   "update.code.visualstudio.com",
   "vscode-cdn.net",
-  "gallery.vsassets.io"
+  "gallery.vsassets.io",
+  
+  // Obsidian
+  "obsidian.md",
+  "api.obsidian.md",
+  "releases.obsidian.md",
+  "regexp:sync-\\d+\\.obsidian\\.md"
 ]
 ```
 
@@ -457,6 +488,136 @@ sudo sed -i 's/"debug"/"warning"/' /etc/xray/config.json
 sudo systemctl restart xray
 ```
 
+**Рабочий /etc/xray/config.json**
+```json
+{
+  "log": {
+    "loglevel": "worning"
+  },
+  "inbounds": [
+    {
+      "port": 1080,
+      "listen": "127.0.0.1",
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true
+      }
+    },
+    {
+      "port": 1081,
+      "listen": "127.0.0.1",
+      "protocol": "http"
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "144.31.81.96",
+            "port": 443,
+            "users": [
+              {
+                "id": "5a3dfaf7-eea4-4b78-bc4a-7a8d8997c40f",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "www.cloudflare.com",
+          "fingerprint": "chrome",
+          "publicKey": "j5TZ4DGRsfoEAZ9Da_mk0nOLw0odhYMZwTluKGT3cwg",
+          "shortId": "2022836a594c7a"
+        }
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "domain": [
+	  // YouTube — нужны CDN домены, иначе видео не грузится
+          "youtube.com",
+          "youtu.be",
+          "ytimg.com",
+          "googlevideo.com",
+          "yt3.ggpht.com",
+
+	  // Google AI сервисы
+          "gemini.google.com",
+          "notebooklm.google.com",
+          "aistudio.google.com",
+
+	  // OpenAI / ChatGPT
+          "chatgpt.com",
+          "openai.com",
+          "oaistatic.com",
+          "oaiusercontent.com",
+          "auth.openai.com",
+
+	  // Anthropic / Claude
+          "claude.ai",
+          "anthropic.com",
+          "api.anthropic.com",
+
+	  // GitHub + Copilot
+          "github.com",
+          "api.github.com",
+          "copilot.github.com",
+          "githubcopilot.com",
+          "github.githubassets.com",
+          "raw.githubusercontent.com",
+
+	  // VSCode
+          "vscode.dev",
+          "marketplace.visualstudio.com",
+          "update.code.visualstudio.com",
+          "vscode-cdn.net",
+          "gallery.vsassets.io",
+
+	  // Obsidian
+	  "obsidian.md",
+	  "api.obsidian.md",
+          "releases.obsidian.md",
+          "regexp:sync-\\d+\\.obsidian\\.md"
+        ],
+        "outboundTag": "proxy"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "1.1.1.1",
+          "8.8.8.8",
+          "geoip:private"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "network": "tcp,udp",
+        "outboundTag": "direct"
+      }
+    ]
+  }
+}
+```
+
+
 ---
 
 ## Быстрый чеклист при первой установке
@@ -471,3 +632,4 @@ sudo systemctl restart xray
 [ ] Переопределить ~/.local/share/applications/google-chrome.desktop
 [ ] Открыть YouTube в Chrome — работает
 ```
+
