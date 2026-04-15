@@ -1,10 +1,12 @@
 # =============================================================================
 # ~/.config/alacritty/alacritty.toml
-# Catppuccin Mocha — согласован с waybar/style.css и swaylock/config
 # Документация: https://alacritty.org/config-alacritty.html
 # =============================================================================
 
 [general]
+import = [
+    "~/.config/alacritty/themes/themes/breeze.toml"
+]
 
 # =============================================================================
 # ТЕРМИНАЛ
@@ -75,62 +77,6 @@ blink_interval   = 500
 blink_timeout    = 0
 unfocused_hollow = true
 thickness        = 0.15
-
-# =============================================================================
-# ПАЛИТРА — Catppuccin Mocha
-# =============================================================================
-
-[colors.primary]
-background = "#111111"   # crust
-foreground = "#cdd6f4"   # text
-
-[colors.cursor]
-text   = "#111111"
-cursor = "#cdd6f4"
-
-[colors.vi_mode_cursor]
-text   = "#111111"
-cursor = "#cba6f7"   # mauve
-
-[colors.search.matches]
-foreground = "#111111"
-background = "#a6adc8"   # subtext0
-
-[colors.search.focused_match]
-foreground = "#111111"
-background = "#a6e3a1"   # green
-
-[colors.hints.start]
-foreground = "#111111"
-background = "#f9e2af"   # yellow
-
-[colors.hints.end]
-foreground = "#111111"
-background = "#45475a"   # surface1
-
-[colors.selection]
-text       = "#111111"
-background = "#cba6f7"   # mauve
-
-[colors.normal]
-black   = "#45475a"   # surface1
-red     = "#f38ba8"   # red
-green   = "#a6e3a1"   # green
-yellow  = "#f9e2af"   # yellow
-blue    = "#89b4fa"   # blue
-magenta = "#cba6f7"   # mauve
-cyan    = "#89dceb"   # sky
-white   = "#bac2de"   # subtext1
-
-[colors.bright]
-black   = "#585b70"   # surface2
-red     = "#f38ba8"
-green   = "#a6e3a1"
-yellow  = "#f9e2af"
-blue    = "#89b4fa"
-magenta = "#cba6f7"
-cyan    = "#89dceb"
-white   = "#a6adc8"   # subtext0
 
 # =============================================================================
 # МЫШЬ
