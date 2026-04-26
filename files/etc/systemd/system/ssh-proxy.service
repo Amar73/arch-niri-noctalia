@@ -1,0 +1,23 @@
+[Unit]
+Description=SSH SOCKS5 proxy to VPS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=amar
+Environment=HOME=/home/amar
+ExecStart=/usr/bin/autossh -M 0 -N -D 1080 \
+  -i /home/amar/.ssh/id_ed25519 \
+  -o "ServerAliveInterval=15" \
+  -o "ServerAliveCountMax=2" \
+  -o "ExitOnForwardFailure=yes" \
+  -o "StrictHostKeyChecking=accept-new" \
+  -o "BatchMode=yes" \
+  -o "ControlMaster=no" \
+  -o "ControlPath=none" \
+  amar@vps
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

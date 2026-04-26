@@ -1,7 +1,115 @@
 # Arch Linux + Niri
 
-Bootstrap-репозиторий для чистого Arch Linux.
-Стек: niri (tiling Wayland compositor) + Waybar + Alacritty + Catppuccin Mocha.
+Bootstrap-репозиторий для воспроизводимой установки Arch Linux.  
+Стек: **niri** (tiling Wayland compositor) + **Waybar** + **Alacritty** + **Catppuccin Mocha**.
+
+Одна команда `make install` — и система готова к работе. Конфиги, пакеты, сервисы,
+SSH-инфраструктура и обои деплоятся автоматически с учётом hostname машины.
+
+---
+
+## Что умеет этот репозиторий
+
+| Возможность | Как работает |
+|-------------|--------------|
+| **Полная установка с нуля** | `make install` — пакеты, конфиги, сервисы, greetd, niri |
+| **Синхронизация конфигов** | `make sync` — rsync из репо в систему + smoke-check |
+| **Per-hostname конфиги** | Мониторы и обои деплоятся по hostname из `outputs/` и `wallpapers/` |
+| **SSH без IP-адресов** | `deploy-ssh-config.sh` генерирует конфиг по контексту машины, хосты из `/etc/hosts` |
+| **Claude Code** | `make claude-proxy` — SSH SOCKS5 туннель + privoxy + wrapper |
+| **Проверка без Arch** | `make check-local` — bash syntax + структура файлов, работает в CI |
+| **Полная проверка** | `make check` — команды, пакеты, сервисы, niri config на живой системе |
+| **Обновление** | `make update` — pacman → yay → orphans → валидация конфигов |
+| **Резервная копия** | `make backup` — greetd, ~/.config, .bashrc, .ssh/config |
+
+---
+
+## Структура репозитория
+
+```
+arch-niri/
+├── Makefile                        — все точки входа: make <target>
+│
+├── install.sh                      — полная установка с нуля
+├── sync.sh                         — синхронизация конфигов + перезапуск сервисов
+├── update.sh                       — pacman → yay → orphans → daemon-reload
+├── check-local.sh                  — синтаксис + структура, без pacman/systemctl
+├── post-install-check.sh           — полная проверка на живой Arch системе
+├── deploy-outputs.sh               — деплой конфигов мониторов и обоев по hostname
+├── deploy-ssh-config.sh            — генерация ~/.ssh/config по контексту машины
+├── deploy-claude-proxy.sh          — установка Claude Code через SSH SOCKS5 + privoxy
+├── install-packages.sh             — установка пакетов из packages/*.txt
+├── bootstrap-dotfiles.sh           — деплой dotfiles из репо или git URL
+├── logs.sh                         — логи сервисов текущей загрузки
+├── backup.sh                       — резервная копия конфигов
+│
+├── packages/
+│   ├── base.txt                    — базовый набор пакетов для всех машин
+│   ├── niri.txt                    — пакеты niri-стека
+│   └── aur.txt                     — пакеты из AUR
+│
+├── Wallpapers/                     — обои (используются в wallpapers/*.kdl)
+│
+├── claude-code-setup.md            — руководство по Claude Code + SSH туннель
+├── rclone-gdrive.md                — руководство по монтированию Google Drive
+├── vpn-vless-arch-guide.md         — руководство по VLESS+REALITY VPN
+├── ArchInstall.md                  — руководство по установке Arch Linux
+│
+└── files/                          — конфиги, деплоятся в систему как есть
+    ├── etc/
+    │   ├── greetd/config.toml      — display manager (tuigreet → niri-start)
+    │   └── systemd/system/
+    │       └── ssh-proxy.service   — systemd unit SSH SOCKS5 туннеля
+    └── home/
+        ├── .bashrc                 — PS1, алиасы, keychain, git-функции
+        ├── .ssh/config             — SSH с ProxyJump цепочками (без IP)
+        ├── bin/
+        │   └── claude              — wrapper Claude Code (HTTPS_PROXY → privoxy)
+        ├── .local/bin/
+        │   └── set-wallpapers      — wrapper swaybg для amar224 (3 монитора)
+        └── .config/
+            ├── niri/
+            │   ├── config.kdl      — главный конфиг (include conf.d/*)
+            │   ├── conf.d/         — модульные конфиги: input, layout, binds...
+            │   │   ├── 45-wallpaper.kdl  ← генерируется deploy-outputs.sh
+            │   │   └── 60-outputs.kdl    ← генерируется deploy-outputs.sh
+            │   ├── outputs/        — конфиги мониторов по hostname
+            │   └── wallpapers/     — конфиги обоев по hostname
+            ├── waybar/             — статусбар: config.jsonc + style.css
+            ├── alacritty/          — терминал: Catppuccin Mocha
+            ├── swaylock/           — блокировщик: Catppuccin Mocha
+            ├── mako/               — уведомления
+            ├── fuzzel/             — лончер
+            ├── mc/                 — Midnight Commander (скин: nicedark)
+            ├── gtk-3.0/ gtk-4.0/  — GTK тема и иконки
+            ├── qt6ct/              — Qt6 тема и шрифты
+            └── systemd/user/       — user-сервисы: swayidle, cliphist
+```
+
+### Как работает деплой по hostname
+
+`deploy-outputs.sh` определяет hostname машины и копирует нужные файлы:
+
+```
+files/home/.config/niri/outputs/<hostname>.kdl  →  conf.d/60-outputs.kdl
+files/home/.config/niri/wallpapers/<hostname>.kdl  →  conf.d/45-wallpaper.kdl
+```
+
+Если hostname не совпадает ни с одним файлом — применяется `default.kdl`.
+Добавить поддержку новой машины: создать `outputs/<hostname>.kdl` и `wallpapers/<hostname>.kdl`.
+
+### SSH без IP-адресов
+
+Все хосты резолвятся через `/etc/hosts` — IP-адреса не хранятся в репозитории.  
+`deploy-ssh-config.sh` генерирует разные конфиги в зависимости от того, где запускается:
+
+```
+# /etc/hosts (пример — заполни под свою инфраструктуру)
+192.168.1.100  amar    # jump-хост amar224
+10.0.0.1       wn75    # рабочий сервер
+10.0.0.2       ui      # UI-сервер
+1.2.3.4        vps     # зарубежный VPS (для Claude Code / VLESS туннеля)
+```
 
 ---
 
@@ -283,6 +391,8 @@ make packages
 | `make validate` | Валидация niri config через `niri validate` |
 | `make reload` | Reload niri config без перезапуска сессии |
 | `make ssh-config` | Деплой `~/.ssh/config` в зависимости от hostname |
+| `make claude-proxy` | Установка Claude Code с SSH-туннелем и privoxy |
+| `make claude-check` | Проверка цепочки Claude Code без установки |
 
 ---
 
@@ -722,6 +832,7 @@ sudo tee -a /etc/hosts << 'EOF'
 192.168.1.100  amar
 192.168.1.101  wn75
 192.168.1.110  ui
+1.2.3.4        vps
 EOF
 
 # Проверить
@@ -826,7 +937,9 @@ arch-niri/
         ├── .ssh/config             — SSH с ProxyJump цепочками
         ├── .local/
         │   └── bin/
-        │       └── set-wallpapers        — wrapper запуска swaybg (amar224)
+        │       └── set-wallpapers
+        ├── bin/
+        │   └── claude                  — wrapper Claude Code (HTTPS_PROXY → privoxy)        — wrapper запуска swaybg (amar224)
         └── .config/
             ├── niri/
             │   ├── config.kdl      — главный конфиг (include conf.d)

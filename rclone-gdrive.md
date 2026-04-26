@@ -123,13 +123,11 @@ ExecStart=/usr/bin/rclone mount gdrive: %h/GoogleDrive \
 
 ExecStop=/bin/fusermount -u %h/GoogleDrive
 
-# Не лупить при сетевых сбоях слишком часто
 Restart=on-failure
 RestartSec=30
 StartLimitIntervalSec=300
 StartLimitBurst=5
 
-# Ресурсы: не давать жрать всё
 MemoryMax=1G
 CPUQuota=50%
 
@@ -156,8 +154,6 @@ ls ~/GoogleDrive
 ---
 
 ## 7. Ротация логов
-
-Без этого лог вырастет в несколько гигабайт за месяц.
 
 ```bash
 nano ~/.config/logrotate-user.conf
@@ -186,7 +182,7 @@ crontab -e
 
 ---
 
-## 8. Мониторинг: простой health-check скрипт
+## 8. Health-check скрипт
 
 ```bash
 nano ~/bin/gdrive-check.sh
@@ -195,20 +191,16 @@ chmod +x ~/bin/gdrive-check.sh
 
 ```bash
 #!/usr/bin/env bash
-# gdrive-check.sh — проверка монтирования и доступности Google Drive
-
 MOUNT="$HOME/GoogleDrive"
 LOG="$HOME/.local/log/rclone-gdrive.log"
 SERVICE="rclone-gdrive.service"
 
-# Проверка: смонтировано?
 if ! mountpoint -q "$MOUNT"; then
     echo "[$(date '+%F %T')] WARN: $MOUNT не смонтирован. Перезапускаю..." | tee -a "$LOG"
     systemctl --user restart "$SERVICE"
     sleep 10
 fi
 
-# Проверка: диск доступен?
 if ! ls "$MOUNT" &>/dev/null; then
     echo "[$(date '+%F %T')] ERROR: ls $MOUNT завис. Форсирую unmount + restart..." | tee -a "$LOG"
     fusermount -u "$MOUNT" 2>/dev/null || true
@@ -220,7 +212,7 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 
 Добавь в crontab:
 
-```bash
+```
 */15 * * * * ~/bin/gdrive-check.sh >> ~/.local/log/gdrive-check.log 2>&1
 ```
 
@@ -238,7 +230,7 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 | `--buffer-size` | 512M | RAM-буфер между mount и сетью |
 | `--transfers` | 8 | Параллельные передачи |
 | `--checkers` | 16 | Параллельные проверки метаданных |
-| `--bwlimit` | 50M | Лимит пропускной способности (байт/с × 8 = ~400Mbit) |
+| `--bwlimit` | 50M | Лимит пропускной способности |
 | `--poll-interval` | 30s | Как часто проверять изменения на Drive |
 | `--dir-cache-time` | 72h | Кэш списков директорий |
 | `--allow-other` | — | Доступ к mount другим пользователям/процессам |
@@ -248,24 +240,24 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 
 ## 10. Тюнинг под сценарий
 
-### Медленный интернет / VPS с лимитом трафика
+### Медленный интернет / лимит трафика
 
 ```bash
 --bwlimit       5M
 --transfers     2
 --checkers      4
 --buffer-size   64M
---vfs-cache-mode writes   # экономия: только запись кэшируется
+--vfs-cache-mode writes
 ```
 
-### Работа с большими медиафайлами (видео, архивы)
+### Большие медиафайлы
 
 ```bash
 --vfs-read-chunk-size        256M
---vfs-read-chunk-size-limit  0       # без лимита роста чанков
+--vfs-read-chunk-size-limit  0
 --drive-chunk-size           256M
 --buffer-size                1G
---bwlimit                    0       # без лимита
+--bwlimit                    0
 ```
 
 ### Только резервное копирование (без mount)
@@ -280,9 +272,7 @@ rclone sync /local/path gdrive:Backups \
 
 ---
 
-## 11. Шифрование (опционально, но правильно)
-
-Если в Drive лежат приватные данные — оберни в `crypt` remote:
+## 11. Шифрование (опционально)
 
 ```bash
 rclone config
@@ -292,20 +282,17 @@ rclone config
 n → новый remote
 name: gdrive-crypt
 type: crypt
-remote: gdrive:Encrypted         # папка на диске
+remote: gdrive:Encrypted
 filename_encryption: standard
 directory_name_encryption: true
 password: (задай надёжный пароль)
 ```
 
-Используй `gdrive-crypt:` вместо `gdrive:` в service файле.  
-Файлы на диске будут нечитаемы без пароля — даже если Google сольёт бэкап.
+Используй `gdrive-crypt:` вместо `gdrive:` в service файле.
 
 ---
 
 ## 12. Двусторонняя синхронизация (bisync)
-
-Для сценария «работаю с файлами локально, синхронизирую с Drive»:
 
 ```bash
 # Первый запуск — обязательно с --resync
@@ -340,17 +327,13 @@ tail -f ~/.local/log/rclone-gdrive.log
 # Смонтировано?
 mountpoint ~/GoogleDrive
 
-# Что там с кэшем
+# Кэш
 du -sh ~/.cache/rclone/gdrive
 
-# Тест скорости чтения/записи
-rclone test makefiles gdrive:_bench --files 10 --file-size 100M
-rclone delete gdrive:_bench
-
-# Принудительный unmount (если завис)
+# Принудительный unmount
 fusermount -u ~/GoogleDrive
 
-# Жёсткий unmount (если fusermount не помогает)
+# Жёсткий unmount
 sudo umount -l ~/GoogleDrive
 ```
 
@@ -359,7 +342,7 @@ sudo umount -l ~/GoogleDrive
 ## Итоговый чеклист
 
 - [ ] `fuse.conf` → `user_allow_other` раскомментирован
-- [ ] `rclone config` → remote `gdrive` создан и проверен (`rclone lsd gdrive:`)
+- [ ] `rclone config` → remote `gdrive` создан и проверен
 - [ ] Директории созданы: `~/GoogleDrive`, `~/.local/log`, `~/.cache/rclone/gdrive`
 - [ ] `rclone-gdrive.service` создан и активирован
 - [ ] `logrotate` настроен

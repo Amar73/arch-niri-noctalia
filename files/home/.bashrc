@@ -422,14 +422,6 @@ alias scpput='upload_to_server'
 alias scpto='download_from_server'
 alias putto='upload_to_server'
 
-#####Скачивать файлы:
-# scpto arch05 /root/file.txt ~/Downloads/
-# scpto archminio01 /home/amar/data.txt ~/temp/
-#
-#####Отправлять файлы:
-# putto arch05 ~/report.pdf /home/amar/
-# putto archminio02 ~/backup.tar.gz /var/backups/
-#
 
 # =============================================================================
 # GIT — РАБОТА С ПРОЕКТАМИ

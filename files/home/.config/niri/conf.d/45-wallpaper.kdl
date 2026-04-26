@@ -1,5 +1,3 @@
-// Этот файл генерируется deploy-outputs.sh по hostname.
-// Не редактировать вручную — будет перезаписан при следующем деплое.
-// Источники: files/home/.config/niri/wallpapers/<hostname>.kdl
-
-spawn-at-startup "swaybg" "-i" "/home/amar/Amar73/arch-niri/Wallpapers/arch.jpeg" "-m" "fill"
+// Обои — запуск через wrapper-скрипт ~/.local/bin/set-wallpapers
+// Деплоится автоматически deploy-outputs.sh по hostname
+spawn-at-startup "/home/amar/.local/bin/set-wallpapers"

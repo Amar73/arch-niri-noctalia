@@ -1,0 +1,5 @@
+#!/bin/bash
+# Wrapper для Claude Code — проксирование через privoxy → SSH SOCKS5 туннель
+# Устанавливает HTTPS_PROXY только для этого процесса, не глобально
+export HTTPS_PROXY="http://127.0.0.1:8118"
+exec ~/.local/bin/claude "$@"

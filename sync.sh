@@ -82,6 +82,13 @@ if [[ -f "${ROOT_DIR}/files/home/.local/bin/set-wallpapers" ]]; then
   echo "[OK] set-wallpapers задеплоен"
 fi
 
+# Claude Code wrapper
+if [[ -f "${ROOT_DIR}/files/home/bin/claude" ]]; then
+    mkdir -p "${HOME}/bin"
+    install -m 755 "${ROOT_DIR}/files/home/bin/claude" "${HOME}/bin/claude"
+    echo "[OK] claude wrapper задеплоен"
+fi
+
 echo "[*] Deploy outputs config"
 bash "${ROOT_DIR}/deploy-outputs.sh"
 
