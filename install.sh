@@ -193,6 +193,18 @@ print_summary() {
 
 EOF
 }
+# Функция — добавь перед main()
+install_alacritty_themes() {
+  local themes_dir="${HOME}/.config/alacritty/themes"
+  if [[ -d "$themes_dir/.git" ]]; then
+    log "Обновление alacritty-theme"
+    git -C "$themes_dir" pull --ff-only
+  else
+    log "Установка alacritty-theme"
+    mkdir -p "$themes_dir"
+    git clone https://github.com/alacritty/alacritty-theme "$themes_dir"
+  fi
+}
 
 main() {
   need sudo
@@ -211,6 +223,7 @@ main() {
   install_aur_packages
   install_niri_start
   deploy_files
+  install_alacritty_themes
   enable_user_services
   print_summary
 }

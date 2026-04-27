@@ -2,6 +2,16 @@
 
 > Tested on Arch Linux + systemd. Никаких GUI, только терминал и здравый смысл.
 
+## Конфигурация этой машины
+
+```
+/dev/sdb2  1.3T  /data          — HDD, здесь живут данные и точка монтирования
+/data/Googl.Drive               — точка монтирования Google Drive
+~/Googl.Drive -> /data/Googl.Drive  — симлинк для удобного доступа
+~/.cache/rclone/gdrive          — VFS кэш (на SSD root, до 5G)
+~/.local/log/                   — логи
+```
+
 ---
 
 ## 1. Установка
@@ -10,9 +20,9 @@
 sudo pacman -S rclone fuse2
 ```
 
-> `fuse2` — для `--allow-other`. На некоторых системах нужен именно он, а не `fuse3`.
+> `fuse2` — нужен для `--allow-other`. Именно `fuse2`, не `fuse3`.
 
-Проверь версию — должна быть >= 1.60:
+Проверь версию (должна быть ≥ 1.60):
 
 ```bash
 rclone version
@@ -47,15 +57,15 @@ rclone config
 ```
 n  → новый remote
 name: gdrive
-type: drive (номер в списке)
-client_id: (Enter — использовать встроенный)
-client_secret: (Enter)
-scope: 1  → полный доступ к диску
-root_folder_id: (Enter)
-service_account_file: (Enter)
+type: drive
+client_id:           (Enter — использовать встроенный)
+client_secret:       (Enter)
+scope: 1             → полный доступ к диску
+root_folder_id:      (Enter)
+service_account_file:(Enter)
 Edit advanced config? n
-Use auto config? y  → откроется браузер, авторизуйся
-Configure as Shared Drive? n (если личный диск)
+Use auto config? y   → откроется браузер, авторизуйся
+Configure as Shared Drive? n
 ```
 
 Проверка:
@@ -69,9 +79,18 @@ rclone lsd gdrive:
 ## 4. Подготовка директорий
 
 ```bash
-mkdir -p ~/GoogleDrive
+# Точка монтирования на HDD (уже существует)
+sudo mkdir -p /data/Googl.Drive
+sudo chown amar:amar /data/Googl.Drive
+
+# Симлинк из домашней директории (уже существует)
+# ln -s /data/Googl.Drive ~/Googl.Drive
+
+# VFS кэш — на SSD (root), лимит 5G
+mkdir -p ~/.cache/rclone/gdrive
+
+# Логи
 mkdir -p ~/.local/log
-mkdir -p ~/.cache/rclone/gdrive   # vfs cache
 ```
 
 ---
@@ -93,9 +112,9 @@ Wants=network-online.target
 Type=simple
 
 # Создать точку монтирования если нет
-ExecStartPre=/bin/mkdir -p %h/GoogleDrive
+ExecStartPre=/bin/mkdir -p /data/Googl.Drive
 
-ExecStart=/usr/bin/rclone mount gdrive: %h/GoogleDrive \
+ExecStart=/usr/bin/rclone mount gdrive: /data/Googl.Drive \
   --config         %h/.config/rclone/rclone.conf \
   \
   --vfs-cache-mode      full \
@@ -121,7 +140,7 @@ ExecStart=/usr/bin/rclone mount gdrive: %h/GoogleDrive \
   --log-level   INFO \
   --log-file    %h/.local/log/rclone-gdrive.log
 
-ExecStop=/bin/fusermount -u %h/GoogleDrive
+ExecStop=/bin/fusermount -u /data/Googl.Drive
 
 Restart=on-failure
 RestartSec=30
@@ -148,7 +167,7 @@ systemctl --user enable --now rclone-gdrive.service
 
 ```bash
 systemctl --user status rclone-gdrive.service
-ls ~/GoogleDrive
+ls ~/Googl.Drive
 ```
 
 ---
@@ -160,7 +179,7 @@ nano ~/.config/logrotate-user.conf
 ```
 
 ```
-/home/YOUR_USER/.local/log/rclone-gdrive.log {
+/home/amar/.local/log/rclone-gdrive.log {
     daily
     rotate 7
     compress
@@ -177,7 +196,7 @@ crontab -e
 ```
 
 ```
-0 4 * * * /usr/sbin/logrotate ~/.config/logrotate-user.conf
+0 4 * * * /usr/sbin/logrotate /home/amar/.config/logrotate-user.conf
 ```
 
 ---
@@ -185,13 +204,14 @@ crontab -e
 ## 8. Health-check скрипт
 
 ```bash
+mkdir -p ~/bin
 nano ~/bin/gdrive-check.sh
 chmod +x ~/bin/gdrive-check.sh
 ```
 
 ```bash
 #!/usr/bin/env bash
-MOUNT="$HOME/GoogleDrive"
+MOUNT="/data/Googl.Drive"
 LOG="$HOME/.local/log/rclone-gdrive.log"
 SERVICE="rclone-gdrive.service"
 
@@ -223,9 +243,10 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 | Параметр | Значение | Смысл |
 |---|---|---|
 | `--vfs-cache-mode full` | full | Полный кэш: чтение + запись без тормозов seek |
-| `--vfs-cache-max-size` | 5G | Лимит дискового кэша |
+| `--vfs-cache-max-size` | 5G | Лимит VFS кэша на SSD (root-разделе) |
 | `--vfs-cache-max-age` | 12h | Протухание кэша |
 | `--vfs-read-chunk-size` | 128M | Чанк чтения, ускоряет большие файлы |
+| `--cache-dir` | `~/.cache/rclone/gdrive` | VFS кэш на SSD — быстрее чем HDD |
 | `--drive-chunk-size` | 128M | Чанк загрузки на Drive |
 | `--buffer-size` | 512M | RAM-буфер между mount и сетью |
 | `--transfers` | 8 | Параллельные передачи |
@@ -235,6 +256,11 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 | `--dir-cache-time` | 72h | Кэш списков директорий |
 | `--allow-other` | — | Доступ к mount другим пользователям/процессам |
 | `--umask 022` | — | Права на файлы: 644/755 |
+
+> **Почему `--cache-dir` на SSD, а mount на HDD:**  
+> VFS кэш — это рабочий буфер для активных файлов (seek, random write).  
+> Ему нужна скорость → SSD (`~/.cache/`).  
+> Смонтированный Drive — это холодное хранилище → HDD (`/data/`).
 
 ---
 
@@ -250,7 +276,7 @@ echo "[$(date '+%F %T')] OK: $MOUNT доступен."
 --vfs-cache-mode writes
 ```
 
-### Большие медиафайлы
+### Большие медиафайлы (видео, архивы)
 
 ```bash
 --vfs-read-chunk-size        256M
@@ -274,6 +300,8 @@ rclone sync /local/path gdrive:Backups \
 
 ## 11. Шифрование (опционально)
 
+Если в Drive лежат приватные данные — оберни в `crypt` remote:
+
 ```bash
 rclone config
 ```
@@ -288,11 +316,14 @@ directory_name_encryption: true
 password: (задай надёжный пароль)
 ```
 
-Используй `gdrive-crypt:` вместо `gdrive:` в service файле.
+Используй `gdrive-crypt:` вместо `gdrive:` в service файле.  
+Файлы на диске будут нечитаемы без пароля.
 
 ---
 
 ## 12. Двусторонняя синхронизация (bisync)
+
+Для сценария «работаю локально, синхронизирую с Drive»:
 
 ```bash
 # Первый запуск — обязательно с --resync
@@ -310,7 +341,8 @@ rclone bisync ~/Documents/Sync gdrive:Sync \
 В crontab:
 
 ```
-0 */2 * * * /usr/bin/rclone bisync ~/Documents/Sync gdrive:Sync --drive-chunk-size 128M >> ~/.local/log/rclone-bisync.log 2>&1
+0 */2 * * * /usr/bin/rclone bisync ~/Documents/Sync gdrive:Sync \
+  --drive-chunk-size 128M >> ~/.local/log/rclone-bisync.log 2>&1
 ```
 
 ---
@@ -325,16 +357,19 @@ systemctl --user status rclone-gdrive.service
 tail -f ~/.local/log/rclone-gdrive.log
 
 # Смонтировано?
-mountpoint ~/GoogleDrive
+mountpoint /data/Googl.Drive
 
-# Кэш
+# Доступно через симлинк?
+ls ~/Googl.Drive
+
+# Кэш (на SSD)
 du -sh ~/.cache/rclone/gdrive
 
-# Принудительный unmount
-fusermount -u ~/GoogleDrive
+# Принудительный unmount (если завис)
+fusermount -u /data/Googl.Drive
 
 # Жёсткий unmount
-sudo umount -l ~/GoogleDrive
+sudo umount -l /data/Googl.Drive
 ```
 
 ---
@@ -342,8 +377,9 @@ sudo umount -l ~/GoogleDrive
 ## Итоговый чеклист
 
 - [ ] `fuse.conf` → `user_allow_other` раскомментирован
-- [ ] `rclone config` → remote `gdrive` создан и проверен
-- [ ] Директории созданы: `~/GoogleDrive`, `~/.local/log`, `~/.cache/rclone/gdrive`
+- [ ] `rclone config` → remote `gdrive` создан и проверен (`rclone lsd gdrive:`)
+- [ ] Директории: `/data/Googl.Drive`, `~/.cache/rclone/gdrive`, `~/.local/log`
+- [ ] Симлинк `~/Googl.Drive → /data/Googl.Drive` существует
 - [ ] `rclone-gdrive.service` создан и активирован
 - [ ] `logrotate` настроен
 - [ ] `gdrive-check.sh` в crontab каждые 15 минут
