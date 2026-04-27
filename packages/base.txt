@@ -117,6 +117,10 @@ lazygit
 s-tui
 jq
 
+# --- Claude Code proxy stack ---
+autossh                        # Мониторинг и перезапуск SSH-туннеля
+privoxy                        # SOCKS5 → HTTP прокси конвертер
+
 # --- Мониторинг системы ---
 btop
 htop

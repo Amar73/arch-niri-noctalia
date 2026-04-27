@@ -16,7 +16,8 @@ check_cmd() {
 
 echo "=== commands ==="
 for cmd in niri niri-session alacritty fuzzel mako waybar swayidle swaylock \
-           wl-paste cliphist tuigreet nwg-look qt6ct ssh keychain yay btop jq pulsemixer; do
+           wl-paste cliphist tuigreet nwg-look qt6ct ssh keychain yay btop jq pulsemixer \
+           autossh privoxy; do
   check_cmd "$cmd"
 done
 
@@ -90,6 +91,29 @@ echo "=== user services ==="
 systemctl --user is-enabled swayidle.service        >/dev/null 2>&1 && ok "swayidle.service enabled"        || warn "swayidle.service not enabled"
 systemctl --user is-enabled cliphist-text.service   >/dev/null 2>&1 && ok "cliphist-text.service enabled"   || warn "cliphist-text.service not enabled"
 systemctl --user is-enabled cliphist-images.service >/dev/null 2>&1 && ok "cliphist-images.service enabled" || warn "cliphist-images.service not enabled"
+
+echo
+echo "=== claude code ==="
+
+systemctl is-enabled ssh-proxy.service >/dev/null 2>&1 \
+    && ok "ssh-proxy.service enabled" \
+    || warn "ssh-proxy.service не включён — запусти: make claude-proxy"
+
+systemctl is-active ssh-proxy.service >/dev/null 2>&1 \
+    && ok "ssh-proxy.service active" \
+    || warn "ssh-proxy.service не запущен"
+
+systemctl is-active privoxy.service >/dev/null 2>&1 \
+    && ok "privoxy.service active" \
+    || warn "privoxy.service не запущен"
+
+[[ -x "${HOME}/bin/claude" ]] \
+    && ok "~/bin/claude wrapper exists" \
+    || warn "~/bin/claude не найден — запусти: make claude-proxy"
+
+[[ -x "${HOME}/.local/bin/claude" ]] \
+    && ok "claude: $("${HOME}/.local/bin/claude" --version 2>/dev/null || echo 'установлен')" \
+    || warn "Claude Code не установлен — запусти: make claude-proxy"
 
 echo
 echo "=== niri-start wrapper ==="

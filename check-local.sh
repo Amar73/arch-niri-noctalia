@@ -69,6 +69,7 @@ expected_files=(
   "home/.config/systemd/user/cliphist-images.service"
   "home/.config/mc/ini"
   "home/.local/bin/set-wallpapers"
+  "home/bin/claude"
 )
 
 for rel in "${expected_files[@]}"; do
@@ -85,7 +86,7 @@ done
 # --------------------------------------------------------------------------
 echo
 echo "=== makefile targets ==="
-for target in install check check-local sync update logs backup dots dots-local validate reload outputs packages ssh-config; do
+for target in install check check-local sync update logs backup dots dots-local validate reload outputs packages ssh-config claude-proxy claude-check; do
   if grep -q "^${target}:" "${ROOT_DIR}/Makefile"; then
     ok "target: $target"
   else

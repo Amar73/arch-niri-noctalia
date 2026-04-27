@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: install check check-local sync logs backup dots dots-local validate reload update outputs packages ssh-config
+.PHONY: install check check-local sync logs backup dots dots-local validate reload update outputs packages ssh-config claude-proxy claude-check
 
 install:
 	./install.sh
@@ -43,3 +43,9 @@ packages:
 
 ssh-config:
 	./deploy-ssh-config.sh
+
+claude-proxy:
+	./deploy-claude-proxy.sh
+
+claude-check:
+	./deploy-claude-proxy.sh --check-only
