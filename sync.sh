@@ -44,6 +44,16 @@ config_src="${FILES_DIR}/home/.config"
 mkdir -p "${HOME}/.config"
 rsync -a --delete "$config_src/" "${HOME}/.config/"
 
+echo "[*] Update alacritty themes"
+_themes_dir="${HOME}/.config/alacritty/themes"
+if [[ -d "$_themes_dir/.git" ]]; then
+  git -C "$_themes_dir" pull --ff-only && echo "[OK] alacritty-theme обновлены"
+else
+  mkdir -p "$_themes_dir"
+  git clone https://github.com/alacritty/alacritty-theme "$_themes_dir"
+  echo "[OK] alacritty-theme установлены"
+fi
+
 echo "[*] Sync ~/.bashrc and ~/.ssh/config"
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
