@@ -142,7 +142,8 @@ alias gs='git status'
 alias ga='git add -A'
 alias gc='git commit -m'
 
-# Функции (не алиасы): ветка читается в runtime, а не при source .bashrc
+# ИСПРАВЛЕНО v6.3: были алиасы с $() — вычислялись при source .bashrc,
+# а не при вызове команды. Переведены в функции: ветка читается в runtime.
 gp()  { git push origin "$(git symbolic-ref --short HEAD)"; }
 gpf() { git push --force-with-lease -u origin "$(git symbolic-ref --short HEAD)"; }
 gl()  { git pull origin "$(git symbolic-ref --short HEAD)"; }
@@ -183,11 +184,13 @@ if command -v pacman >/dev/null 2>&1; then
     alias update='sudo pacman -Syu'
     alias remove='sudo pacman -R'
 
+    # ИСПРАВЛЕНО: вынесено в функцию + shellcheck disable для намеренного
+    # word splitting (имена пакетов Arch не содержат пробелов — это безопасно)
     autoremove() {
         local orphans
         orphans=$(pacman -Qtdq 2>/dev/null)
         if [[ -n "$orphans" ]]; then
-            # shellcheck disable=SC2086
+            # shellcheck disable=SC2086  # intentional word splitting on package names
             sudo pacman -Rns $orphans
         else
             echo "No orphan packages"
@@ -196,6 +199,7 @@ if command -v pacman >/dev/null 2>&1; then
 
     alias installed='pacman -Q'
 
+    # yay — AUR-хелпер
     if command -v yay >/dev/null 2>&1; then
         alias yaysearch='yay -Ss'
         alias yayinstall='yay -S'
@@ -240,7 +244,6 @@ add_to_path() {
     fi
 }
 
-# ~/bin ПЕРВЫМ — чтобы wrapper ~/bin/claude перекрывал ~/.local/bin/claude
 add_to_path "$HOME/bin"
 add_to_path "$HOME/.local/bin"
 add_to_path "/usr/local/bin"
@@ -290,10 +293,14 @@ PS_RESET='\[\033[0m\]'
 # GIT-СТАТУС ДЛЯ ПРИГЛАШЕНИЯ (PS1)
 # =============================================================================
 
+# ИСПРАВЛЕНО: внутри функций вызываемых из PS1 через $() нужно использовать
+# \001 и \002 вместо \[ и \] — иначе bash неправильно считает длину строки
+# и курсор съезжает при навигации по истории (команды наплывают друг на друга).
+
 git_status() {
     local branch
-    local RL=$'\001'
-    local RR=$'\002'
+    local RL=$'\001'        # начало непечатаемой последовательности
+    local RR=$'\002'        # конец непечатаемой последовательности
     local YELLOW=$'\033[1;33m'
     local GREEN=$'\033[0;32m'
     local RESET=$'\033[0m'
@@ -327,6 +334,8 @@ last_command_status() {
 # ПРИГЛАШЕНИЕ КОМАНДНОЙ СТРОКИ (PS1)
 # =============================================================================
 
+# Формат: HH:MM:SS user@host:~/path (branch*)
+#         ✓ $
 PS1="${PS_CYAN}\t${PS_RESET} ${PS_PURPLE}\u${PS_RESET}@${PS_PURPLE}\h${PS_RESET}:${PS_BLUE}\w${PS_RESET}\$(git_status)\n\$(last_command_status) ${PS_YELLOW}\\\$${PS_RESET} "
 
 
@@ -340,9 +349,11 @@ if command -v keychain >/dev/null 2>&1; then
     [[ -f ~/.ssh/id_rsa     ]] && keys+=(~/.ssh/id_rsa)
 
     if [[ ${#keys[@]} -gt 0 ]]; then
-        eval "$(keychain --quiet "${keys[@]}")"
+        # --quiet — не выводить приветствие
+        # Парольная фраза запрашивается один раз за сессию
+        eval "$(keychain --quiet --eval "${keys[@]}")"
     else
-        eval "$(keychain --quiet)"
+        eval "$(keychain --quiet --eval)"
     fi
 else
     _SSH_ENV="$HOME/.ssh/agent.env"
@@ -411,6 +422,14 @@ alias scpput='upload_to_server'
 alias scpto='download_from_server'
 alias putto='upload_to_server'
 
+#####Скачивать файлы:
+# scpto arch05 /root/file.txt ~/Downloads/
+# scpto archminio01 /home/amar/data.txt ~/temp/
+#
+#####Отправлять файлы:
+# putto arch05 ~/report.pdf /home/amar/
+# putto archminio02 ~/backup.tar.gz /var/backups/
+#
 
 # =============================================================================
 # GIT — РАБОТА С ПРОЕКТАМИ
@@ -450,7 +469,6 @@ project() {
 # =============================================================================
 
 [[ -f ~/.bashrc.local ]] && source ~/.bashrc.local
-# shellcheck disable=SC1090
 [[ -f ~/.bashrc.$(hostname) ]] && source ~/.bashrc.$(hostname)
 
 
@@ -490,6 +508,7 @@ if command -v systemctl >/dev/null 2>&1; then
             sudo journalctl -xeu "$1"
         fi
     }
+
 fi
 
 
