@@ -1,9 +1,9 @@
 /* =============================================================================
    waybar style — Catppuccin Mocha
    Палитра согласована с alacritty.toml и swaylock/config
-   Прямые hex-значения вместо CSS-переменных (GTK CSS их не поддерживает)
+   Прямые hex-значения (GTK CSS не поддерживает CSS-переменные)
 
-   Catppuccin Mocha palette reference:
+   Catppuccin Mocha palette:
    base    #1e1e2e  mantle  #181825  crust   #11111b
    surface0 #313244  surface1 #45475a  surface2 #585b70
    overlay0 #6c7086  overlay1 #7f849c  text    #cdd6f4
@@ -20,9 +20,6 @@
   border-radius: 0;
 }
 
-/* --------------------------------------------------------------------------
-   Основная панель
-   -------------------------------------------------------------------------- */
 window#waybar {
   background-color: rgba(17, 17, 27, 0.92);
   color: #cdd6f4;
@@ -34,9 +31,6 @@ window#waybar.hidden {
   opacity: 0.2;
 }
 
-/* --------------------------------------------------------------------------
-   Общие стили модулей
-   -------------------------------------------------------------------------- */
 .modules-left,
 .modules-center,
 .modules-right {
@@ -63,9 +57,6 @@ window#waybar.hidden {
   transition: all 0.2s ease;
 }
 
-/* --------------------------------------------------------------------------
-   Workspaces
-   -------------------------------------------------------------------------- */
 #workspaces {
   background-color: transparent;
   padding: 0 4px;
@@ -99,9 +90,6 @@ window#waybar.hidden {
   color: #11111b;
 }
 
-/* --------------------------------------------------------------------------
-   Window title
-   -------------------------------------------------------------------------- */
 #window {
   background-color: transparent;
   color: #bac2de;
@@ -109,9 +97,6 @@ window#waybar.hidden {
   padding-left: 4px;
 }
 
-/* --------------------------------------------------------------------------
-   Clock
-   -------------------------------------------------------------------------- */
 #clock {
   background-color: #cba6f7;
   color: #11111b;
@@ -119,110 +104,39 @@ window#waybar.hidden {
   padding: 2px 14px;
 }
 
-/* --------------------------------------------------------------------------
-   CPU
-   -------------------------------------------------------------------------- */
-#cpu {
-  color: #a6e3a1;
-}
+#cpu { color: #a6e3a1; }
+#cpu.warning { color: #f9e2af; }
+#cpu.critical { color: #f38ba8; animation: pulse 1s infinite; }
 
-#cpu.warning {
-  color: #f9e2af;
-}
+#memory { color: #89dceb; }
+#memory.warning { color: #f9e2af; }
+#memory.critical { color: #f38ba8; animation: pulse 1s infinite; }
 
-#cpu.critical {
-  color: #f38ba8;
-  animation: pulse 1s infinite;
-}
+#disk { color: #94e2d5; }
+#disk.warning { color: #f9e2af; }
+#disk.critical { color: #f38ba8; }
 
-/* --------------------------------------------------------------------------
-   Memory
-   -------------------------------------------------------------------------- */
-#memory {
-  color: #89dceb;
-}
-
-#memory.warning {
-  color: #f9e2af;
-}
-
-#memory.critical {
-  color: #f38ba8;
-  animation: pulse 1s infinite;
-}
-
-/* --------------------------------------------------------------------------
-   Disk
-   -------------------------------------------------------------------------- */
-#disk {
-  color: #94e2d5;
-}
-
-#disk.warning {
-  color: #f9e2af;
-}
-
-#disk.critical {
-  color: #f38ba8;
-}
-
-/* --------------------------------------------------------------------------
-   Temperature
-   -------------------------------------------------------------------------- */
-#temperature {
-  color: #fab387;
-}
-
+#temperature { color: #fab387; }
 #temperature.critical {
   color: #f38ba8;
   background-color: #313244;
   animation: pulse 1s infinite;
 }
 
-/* --------------------------------------------------------------------------
-   Audio
-   -------------------------------------------------------------------------- */
-#pulseaudio {
-  color: #cba6f7;
-}
+#pulseaudio { color: #cba6f7; }
+#pulseaudio.muted { color: #6c7086; }
 
-#pulseaudio.muted {
-  color: #6c7086;
-}
+#network { color: #89b4fa; }
+#network.disconnected { color: #f38ba8; }
+#network.linked { color: #f9e2af; }
 
-/* --------------------------------------------------------------------------
-   Network
-   -------------------------------------------------------------------------- */
-#network {
-  color: #89b4fa;
-}
-
-#network.disconnected {
-  color: #f38ba8;
-}
-
-#network.linked {
-  color: #f9e2af;
-}
-
-/* --------------------------------------------------------------------------
-   Language
-   -------------------------------------------------------------------------- */
 #language {
   color: #f9e2af;
   min-width: 44px;
 }
 
-/* --------------------------------------------------------------------------
-   Tray
-   -------------------------------------------------------------------------- */
-#tray {
-  background-color: #313244;
-}
+#tray { background-color: #313244; }
 
-/* --------------------------------------------------------------------------
-   Power button
-   -------------------------------------------------------------------------- */
 #custom-power {
   color: #f38ba8;
   background-color: #313244;
@@ -235,9 +149,6 @@ window#waybar.hidden {
   color: #11111b;
 }
 
-/* --------------------------------------------------------------------------
-   Tooltip
-   -------------------------------------------------------------------------- */
 tooltip {
   background-color: #181825;
   border: 1px solid #45475a;
@@ -250,12 +161,8 @@ tooltip label {
   padding: 4px 8px;
 }
 
-/* --------------------------------------------------------------------------
-   Анимации
-   -------------------------------------------------------------------------- */
 @keyframes pulse {
   0%   { opacity: 1.0; }
   50%  { opacity: 0.5; }
   100% { opacity: 1.0; }
 }
-

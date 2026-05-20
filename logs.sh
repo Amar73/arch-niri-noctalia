@@ -21,6 +21,17 @@ echo "===== cliphist-images.service ====="
 journalctl --user -b -u cliphist-images.service -n 80 --no-pager || true
 echo
 
-echo "===== failed units ====="
+echo "===== ssh-proxy.service ====="
+journalctl -b -u ssh-proxy.service -n 40 --no-pager || true
+echo
+
+echo "===== privoxy.service ====="
+journalctl -b -u privoxy.service -n 20 --no-pager || true
+echo
+
+echo "===== failed units (system) ====="
 systemctl --failed || true
+echo
+
+echo "===== failed units (user) ====="
 systemctl --user --failed || true

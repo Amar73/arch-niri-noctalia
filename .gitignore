@@ -10,6 +10,12 @@ error.log
 *~
 .DS_Store
 
+# Прогресс-файл установки (машиноспецифичный)
+# Не трекать — у каждой машины свой ~/.install-progress
+# (файл хранится в REPO_HOME, не в репозитории)
+
 # Бэкап-директории (создаются backup.sh)
 backup/
+
+# Темы alacritty (клонируются отдельно при install/sync)
 files/home/.config/alacritty/themes/

@@ -11,6 +11,8 @@ set -Eeuo pipefail
 # =============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${ROOT_DIR}/config.sh"
+
 PKG_DIR="${ROOT_DIR}/packages"
 
 log()  { printf '\n[%s] %s\n' "$(date +'%F %T')" "$*"; }
@@ -24,10 +26,10 @@ command -v yay    >/dev/null 2>&1 || die "yay не найден — сначал
 read_pkgs() {
     local file="$1"
     [[ -f "$file" ]] || { echo ""; return; }
-    grep -v '^#' "$file" | grep -v '^$' | sed 's/#.*//' | tr -s ' \t' '\n' | grep -v '^$' | tr '\n' ' '
+    grep -v '^#' "$file" | grep -v '^$' | sed 's/#.*//' \
+        | tr -s ' \t' '\n' | grep -v '^$' | tr '\n' ' '
 }
 
-# Определяем какие файлы устанавливать
 if [[ $# -eq 0 ]]; then
     LISTS="base niri aur"
 else
@@ -45,7 +47,7 @@ for list in $LISTS; do
 
     if [[ "$list" == "aur" ]]; then
         # shellcheck disable=SC2086
-        yay -S --needed --noconfirm $pkgs
+        yay -S --needed --noconfirm --answerdiff=None --answerclean=None $pkgs
     else
         # shellcheck disable=SC2086
         sudo pacman -S --needed --noconfirm $pkgs

@@ -8,16 +8,18 @@ set -Eeuo pipefail
 #   - amar224 (jump-хост) — подключение к wn75 напрямую, без ProxyJump
 #   - другие машины в домашней сети (amar319, amar319-1, ноутбуки)
 #     — через ProxyJump amar224
-#   - внешние машины (grid.kiae.ru и др.) — конфиг не трогается
+#   - внешние машины — конфиг не трогается
 #
 # Запуск:
-#   ./deploy-ssh-config.sh          # автоопределение
+#   ./deploy-ssh-config.sh            # автоопределение
 #   ./deploy-ssh-config.sh --dry-run  # показать что будет задеплоено
 # =============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SSH_DIR="$HOME/.ssh"
-SSH_CONFIG="$SSH_DIR/config"
+source "${ROOT_DIR}/config.sh"
+
+SSH_DIR="${REPO_HOME}/.ssh"
+SSH_CONFIG="${SSH_DIR}/config"
 
 DRY_RUN=false
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
@@ -29,24 +31,14 @@ warn() { printf '[WARN] %s\n' "$*"; }
 # -----------------------------------------------------------------------------
 # Определение контекста
 # -----------------------------------------------------------------------------
-
 detect_context() {
-    local hostname
-    hostname="$(hostname -s)"
-
-    # Машина является jump-хостом — ProxyJump через себя невозможен
+    local hostname; hostname="$(hostname -s)"
     if [[ "$hostname" == "amar224" ]]; then
-        echo "jump_host"
-        return
+        echo "jump_host"; return
     fi
-
-    # Домашняя сеть — машины с именем amar* (не amar224)
     if [[ "$hostname" =~ ^amar ]]; then
-        echo "home_net"
-        return
+        echo "home_net"; return
     fi
-
-    # Всё остальное — внешние машины, не трогаем
     echo "external"
 }
 
@@ -59,7 +51,6 @@ log "Context:  $CONTEXT"
 # -----------------------------------------------------------------------------
 # Внешние машины — пропускаем
 # -----------------------------------------------------------------------------
-
 if [[ "$CONTEXT" == "external" ]]; then
     warn "Внешняя машина ($HOSTNAME) — ssh config не деплоится."
     warn "Если нужно — скопируй вручную из files/home/.ssh/config"
@@ -69,38 +60,19 @@ fi
 # -----------------------------------------------------------------------------
 # Генерация конфига
 # -----------------------------------------------------------------------------
-
-# Общий блок для GitHub (без ProxyJump — прямое соединение)
 GITHUB_BLOCK="Host github.com
     HostName github.com
     User git
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ${REPO_HOME}/.ssh/id_ed25519
     AddKeysToAgent yes"
 
-# Блок wn75 — зависит от контекста
-if [[ "$CONTEXT" == "jump_host" ]]; then
-    # Мы НА amar224 — ProxyJump через себя невозможен, коннектим напрямую
-    # IP-адреса берутся из /etc/hosts
-    WN75_BLOCK="Host wn75
+WN75_BLOCK="Host wn75
     HostName wn75
     User root
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ${REPO_HOME}/.ssh/id_ed25519
     AddKeysToAgent yes"
-else
-    # Мы на домашней машине — wn75 и ui доступны напрямую (как и с amar224)
-    # HostName берётся из /etc/hosts — IP не прописывается
-    WN75_BLOCK="Host wn75
-    HostName wn75
-    User root
-    IdentityFile ~/.ssh/id_ed25519
-    AddKeysToAgent yes"
-fi
 
-# Остальные блоки одинаковые для всех домашних машин
 if [[ "$CONTEXT" == "jump_host" ]]; then
-    # На amar224 не нужен блок самого себя
-    # wn75, ui — прямые подключения (ProxyJump через себя невозможен)
-    # IP-адреса берутся из /etc/hosts
     COMMON_BLOCKS="Host arch03 arch04 arch05
     HostName %h
     User root
@@ -108,12 +80,12 @@ if [[ "$CONTEXT" == "jump_host" ]]; then
 
 Host ui
     HostName ui
-    User amar
+    User ${REPO_USER}
     Port 7890
 
 Host archminio01 archminio02
     HostName %h
-    User amar
+    User ${REPO_USER}
     ProxyJump ui
 
 Host *
@@ -123,13 +95,13 @@ Host *
     ConnectTimeout 15
     Compression yes
     ControlMaster auto
-    ControlPath ~/.ssh/ctrl-%r@%h:%p
+    ControlPath ${REPO_HOME}/.ssh/ctrl-%r@%h:%p
     ControlPersist 10m"
 else
     COMMON_BLOCKS="Host amar224
     HostName amar
-    User amar
-    IdentityFile ~/.ssh/id_ed25519
+    User ${REPO_USER}
+    IdentityFile ${REPO_HOME}/.ssh/id_ed25519
     AddKeysToAgent yes
 
 Host arch03 arch04 arch05
@@ -139,12 +111,12 @@ Host arch03 arch04 arch05
 
 Host ui
     HostName ui
-    User amar
+    User ${REPO_USER}
     Port 7890
 
 Host archminio01 archminio02
     HostName %h
-    User amar
+    User ${REPO_USER}
     ProxyJump ui
 
 Host *
@@ -154,17 +126,17 @@ Host *
     ConnectTimeout 15
     Compression yes
     ControlMaster auto
-    ControlPath ~/.ssh/ctrl-%r@%h:%p
+    ControlPath ${REPO_HOME}/.ssh/ctrl-%r@%h:%p
     ControlPersist 10m"
 fi
 
-# Собираем итоговый конфиг
 CONFIG_CONTENT="# =============================================================================
 # ~/.ssh/config — сгенерирован deploy-ssh-config.sh
-# Контекст: $CONTEXT (hostname: $HOSTNAME)
+# Контекст: $CONTEXT (hostname: $HOSTNAME, user: ${REPO_USER})
 # Дата: $(date '+%F %T')
 # =============================================================================
 # Для ручного обновления: ./deploy-ssh-config.sh
+# IP-адреса берутся из /etc/hosts — не хранятся в репозитории.
 # =============================================================================
 
 $GITHUB_BLOCK
@@ -175,9 +147,8 @@ $COMMON_BLOCKS
 "
 
 # -----------------------------------------------------------------------------
-# Деплой
+# Деплой или dry-run
 # -----------------------------------------------------------------------------
-
 if [[ "$DRY_RUN" == "true" ]]; then
     echo ""
     echo "=== DRY RUN — итоговый ~/.ssh/config ==="
@@ -188,7 +159,6 @@ fi
 mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
 
-# Бэкап существующего конфига
 if [[ -f "$SSH_CONFIG" && ! -L "$SSH_CONFIG" ]]; then
     STAMP="$(date +%F-%H%M%S)"
     cp -a "$SSH_CONFIG" "${SSH_CONFIG}.bak.${STAMP}"
@@ -198,15 +168,9 @@ fi
 echo "$CONFIG_CONTENT" > "$SSH_CONFIG"
 chmod 600 "$SSH_CONFIG"
 
-# Валидация
 if ssh -G github.com >/dev/null 2>&1; then
     ok "ssh config задеплоен и валиден"
-    log "Контекст: $CONTEXT"
-    if [[ "$CONTEXT" == "jump_host" ]]; then
-        log "wn75 → прямое подключение (из /etc/hosts)"
-    else
-        log "wn75, ui → напрямую (из /etc/hosts)"
-    fi
+    log "Контекст: $CONTEXT | Пользователь: ${REPO_USER}"
 else
     warn "ssh config не прошёл валидацию — проверь вручную"
     exit 1

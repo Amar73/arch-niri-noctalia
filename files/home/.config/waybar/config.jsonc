@@ -3,6 +3,9 @@
   // waybar config — niri + Catppuccin Mocha
   // Требует: waybar (Arch extra), wireplumber, networkmanager
   // Нативные niri-модули: niri/workspaces, niri/window, niri/language
+  //
+  // Версии на момент тестирования:
+  //   waybar: 0.10.x   niri: 25.11
   // ==========================================================================
   "layer": "top",
   "position": "top",
@@ -100,6 +103,7 @@
   "temperature": {
     // Если сенсор не определяется автоматически — задай явно:
     // "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input",
+    // Определить путь: for f in /sys/class/hwmon/hwmon*/temp1_input; do echo "$f: $(( $(cat $f) / 1000 ))°C"; done
     "format": "󰔏 {temperatureC}°C",
     "format-critical": "󰸁 {temperatureC}°C",
     "critical-threshold": 80,
@@ -133,11 +137,8 @@
   // --------------------------------------------------------------------------
   // niri/language
   //
-  // Waybar подставляет полное XKB-описание раскладки в format-"ИМЯ".
-  // Точные имена — из: niri msg --json keyboard-layouts | jq .
-  // Стандартные значения для us/ru: "English (US)" и "Russian".
-  //
-  // Если у тебя другие имена — замени ключи ниже на вывод команды выше.
+  // Точные имена раскладок: niri msg --json keyboard-layouts | jq .
+  // Стандартные для us+ru: "English (US)" и "Russian".
   // --------------------------------------------------------------------------
   "niri/language": {
     "format-English (US)": "󰌌 EN",

@@ -1,12 +1,26 @@
 [Unit]
-Description=Swayidle
+Description=Swayidle (резерв — управляется через niri spawn-at-startup)
 PartOf=graphical-session.target
 After=graphical-session.target
+
+# =============================================================================
+# ВАЖНО: Этот сервис НЕ включается через systemctl --user enable.
+#
+# swayidle запускается через spawn-at-startup в niri/conf.d/40-startup.kdl,
+# потому что при dbus-run-session niri переменные WAYLAND_DISPLAY и
+# NIRI_SOCKET не импортируются в systemd user instance.
+#
+# Этот файл хранится как:
+#   1. Документация — показывает альтернативный способ запуска
+#   2. Резерв — для окружений со systemd-session (не используется с niri)
+#
+# Таймауты в 40-startup.kdl: блокировка 1800с, мониторы 600с.
+# =============================================================================
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/swayidle -w \
-  timeout 300  '/usr/bin/swaylock -f' \
+  timeout 1800 '/usr/bin/swaylock -f' \
   timeout 600  '/usr/bin/niri msg action power-off-monitors' \
   before-sleep '/usr/bin/swaylock -f'
 Restart=on-failure

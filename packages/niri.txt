@@ -3,7 +3,7 @@
 # Дополняют base.txt
 #
 # Установка:
-#   grep -v '^#' packages/niri.txt | grep -v '^$' | xargs sudo pacman -S --needed
+#   ./install-packages.sh niri
 # =============================================================================
 
 # --- Compositor ---

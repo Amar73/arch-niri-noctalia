@@ -1,13 +1,33 @@
+# =============================================================================
+# ssh-proxy.service — ШАБЛОН
+#
+# Этот файл является шаблоном. При деплое deploy-claude-proxy.sh
+# и install.sh генерируют актуальный /etc/systemd/system/ssh-proxy.service
+# с правильными значениями User=, HOME=, путём к ключу и именем пользователя VPS.
+#
+# Для ручного деплоя с кастомными параметрами:
+#   REPO_USER=bob VPS_USER=bob INSTALLED_REPO_PATH=/home/bob/dotfiles \
+#     ./deploy-claude-proxy.sh
+#
+# Примечание по безопасности:
+#   StrictHostKeyChecking=accept-new принимает ключ хоста только при первом
+#   подключении. Убедись что VPS добавлен в known_hosts вручную перед
+#   запуском deploy-claude-proxy.sh (скрипт это проверяет).
+#
+#   ControlMaster=no и ControlPath=none — обязательны для systemd-сервиса,
+#   иначе autossh может прицепиться к существующему ControlMaster-сокету
+#   и немедленно завершиться с кодом 0.
+# =============================================================================
 [Unit]
 Description=SSH SOCKS5 proxy to VPS
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=amar
-Environment=HOME=/home/amar
+User=REPO_USER_PLACEHOLDER
+Environment=HOME=REPO_HOME_PLACEHOLDER
 ExecStart=/usr/bin/autossh -M 0 -N -D 1080 \
-  -i /home/amar/.ssh/id_ed25519 \
+  -i REPO_HOME_PLACEHOLDER/.ssh/id_ed25519 \
   -o "ServerAliveInterval=15" \
   -o "ServerAliveCountMax=2" \
   -o "ExitOnForwardFailure=yes" \
@@ -15,7 +35,7 @@ ExecStart=/usr/bin/autossh -M 0 -N -D 1080 \
   -o "BatchMode=yes" \
   -o "ControlMaster=no" \
   -o "ControlPath=none" \
-  amar@vps
+  VPS_USER_PLACEHOLDER@vps
 Restart=always
 RestartSec=5
 

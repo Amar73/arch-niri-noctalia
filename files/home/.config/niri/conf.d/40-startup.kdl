@@ -7,5 +7,12 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 // Запуск через systemd user service не работает при dbus-run-session niri
 // (переменные Wayland не импортируются в systemd user instance).
 //
+// swayidle.service хранится в репо как документация/резерв, но НЕ включается
+// через systemctl --user enable (см. install.sh: enable_user_services).
+// Это предотвращает запуск двух экземпляров swayidle одновременно.
+//
 // Таймауты: 1800с (30 мин) — блокировка, 600с — выключить мониторы
-spawn-at-startup "swayidle" "-w" "timeout" "1800" "swaylock -f" "timeout" "600" "niri msg action power-off-monitors" "before-sleep" "swaylock -f"
+spawn-at-startup "swayidle" "-w" \
+    "timeout" "1800" "swaylock -f" \
+    "timeout" "600"  "niri msg action power-off-monitors" \
+    "before-sleep"   "swaylock -f"

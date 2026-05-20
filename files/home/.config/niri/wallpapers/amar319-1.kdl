@@ -1,4 +1,7 @@
-// Обои для amar319-1 — один монитор (DVI-I-2, Apple Cinema HD)
-// Деплоится автоматически deploy-outputs.sh по hostname
-
-spawn-at-startup "swaybg" "-o" "DVI-I-2" "-i" "/home/amar/Amar73/arch-niri/Wallpapers/wallpaper.jpg" "-m" "fill"
+// =============================================================================
+// wallpapers/amar319-1.kdl — ШАБЛОН для deploy-outputs.sh
+//
+// Этот файл используется deploy-outputs.sh только для определения hostname'а.
+// Актуальный conf.d/45-wallpaper.kdl ГЕНЕРИРУЕТСЯ с реальными путями.
+// Не деплоится напрямую.
+// =============================================================================

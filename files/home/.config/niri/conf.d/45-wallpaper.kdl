@@ -1,3 +1,20 @@
-// Обои — запуск через wrapper-скрипт ~/.local/bin/set-wallpapers
-// Деплоится автоматически deploy-outputs.sh по hostname
-spawn-at-startup "/home/amar/.local/bin/set-wallpapers"
+// =============================================================================
+// conf.d/45-wallpaper.kdl — конфигурация обоев
+//
+// Этот файл ГЕНЕРИРУЕТСЯ автоматически скриптом deploy-outputs.sh
+// на основе hostname машины.
+//
+// Генерация происходит при:
+//   make install  — первоначальная установка
+//   make sync     — синхронизация конфигов
+//   make outputs  — ручной деплой
+//
+// Пути к файлам обоев подставляются с учётом реального $HOME пользователя.
+// Не редактировать вручную — изменения будут перезаписаны.
+//
+// Шаблоны для каждого hostname находятся в:
+//   files/home/.config/niri/wallpapers/<hostname>.kdl
+// =============================================================================
+
+// Placeholder — будет заменён deploy-outputs.sh при первом make install
+// spawn-at-startup "swaybg" "-i" "/path/to/wallpaper.jpg" "-m" "fill"

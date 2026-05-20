@@ -12,12 +12,16 @@ set -Eeuo pipefail
 #   5. Устанавливает Claude Code через HTTPS_PROXY
 #   6. Проверяет что вся цепочка работает
 #
+# ВАЖНО: Перед запуском VPS должен быть в known_hosts:
+#   ssh ${VPS_USER}@vps echo ok
+#
 # Использование:
 #   ./deploy-claude-proxy.sh
 #   ./deploy-claude-proxy.sh --check-only   # только проверка без установки
 # =============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${ROOT_DIR}/config.sh"
 
 log()  { printf '\n[%s] %s\n' "$(date +'%F %T')" "$*"; }
 ok()   { printf '[OK]   %s\n' "$*"; }
@@ -32,8 +36,9 @@ CHECK_ONLY=false
 check_vps_known() {
     if ! ssh-keygen -F vps >/dev/null 2>&1; then
         die "VPS (vps) не найден в known_hosts. Сначала подключись вручную:
-  ssh amar@vps echo ok
-И ответь yes на вопрос про fingerprint. Убедись что vps прописан в /etc/hosts."
+  ssh ${VPS_USER}@vps echo ok
+И ответь yes на вопрос про fingerprint.
+Убедись что vps прописан в /etc/hosts."
     fi
     ok "VPS в known_hosts"
 }
@@ -50,13 +55,14 @@ configure_privoxy() {
     log "Настройка privoxy"
 
     if ! grep -q "^listen-address.*127.0.0.1:8118" /etc/privoxy/config; then
-        sudo sed -i 's/^#.*listen-address.*127\.0\.0\.1:8118/listen-address  127.0.0.1:8118/' \
+        sudo sed -i \
+            's/^#.*listen-address.*127\.0\.0\.1:8118/listen-address  127.0.0.1:8118/' \
             /etc/privoxy/config
         grep -q "^listen-address" /etc/privoxy/config \
             || echo "listen-address  127.0.0.1:8118" | sudo tee -a /etc/privoxy/config
     fi
 
-    # socket-timeout — критично для долгих ответов Opus
+    # socket-timeout — критично для долгих ответов (Opus: до 40 минут)
     if ! grep -q "^socket-timeout" /etc/privoxy/config; then
         echo "socket-timeout 900" | sudo tee -a /etc/privoxy/config
     fi
@@ -65,20 +71,47 @@ configure_privoxy() {
     ok "privoxy настроен и запущен (127.0.0.1:8118)"
 }
 
-# --- Деплой systemd-сервиса ---
+# --- Деплой ssh-proxy.service с правильным пользователем ---
 deploy_ssh_proxy_service() {
     log "Деплой ssh-proxy.service"
+    local key_path="${REPO_HOME}/.ssh/id_ed25519"
 
-    local svc_src="${ROOT_DIR}/files/etc/systemd/system/ssh-proxy.service"
-
-    if [[ -f "$svc_src" ]]; then
-        sudo install -m 644 "$svc_src" /etc/systemd/system/ssh-proxy.service
-        ok "Сервис задеплоен из репо"
-    else
-        warn "Файл $svc_src не найден — пропускаю деплой сервиса"
-        warn "Создай files/etc/systemd/system/ssh-proxy.service и запусти ещё раз"
-        return
+    # Проверяем что ключ существует (нужен без пароля для автозапуска)
+    if [[ ! -f "$key_path" ]]; then
+        die "SSH-ключ не найден: ${key_path}
+Для автозапуска туннеля ключ должен существовать.
+Сгенерируй: ssh-keygen -t ed25519 -C '${REPO_USER}@vps' -f ${key_path}
+И скопируй на VPS: ssh-copy-id -i ${key_path}.pub ${VPS_USER}@vps"
     fi
+
+    sudo tee /etc/systemd/system/ssh-proxy.service > /dev/null << EOF
+[Unit]
+Description=SSH SOCKS5 proxy to VPS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=${REPO_USER}
+Environment=HOME=${REPO_HOME}
+ExecStart=/usr/bin/autossh -M 0 -N -D 1080 \\
+  -i ${key_path} \\
+  -o "ServerAliveInterval=15" \\
+  -o "ServerAliveCountMax=2" \\
+  -o "ExitOnForwardFailure=yes" \\
+  -o "StrictHostKeyChecking=accept-new" \\
+  -o "BatchMode=yes" \\
+  -o "ControlMaster=no" \\
+  -o "ControlPath=none" \\
+  ${VPS_USER}@vps
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    # Примечание по безопасности: StrictHostKeyChecking=accept-new принимает
+    # ключ только при первом подключении. Последующие подключения проверяют
+    # known_hosts. Убедись что VPS добавлен вручную (check_vps_known выше).
 
     sudo systemctl daemon-reload
     sudo systemctl enable --now ssh-proxy.service
@@ -86,7 +119,7 @@ deploy_ssh_proxy_service() {
     sleep 3
 
     if systemctl is-active ssh-proxy.service >/dev/null 2>&1; then
-        ok "ssh-proxy.service запущен"
+        ok "ssh-proxy.service запущен (User=${REPO_USER})"
     else
         fail "ssh-proxy.service не запустился"
         journalctl -u ssh-proxy.service -n 10 --no-pager
@@ -97,27 +130,22 @@ deploy_ssh_proxy_service() {
 # --- Деплой wrapper ---
 deploy_wrapper() {
     log "Деплой ~/bin/claude wrapper"
-    mkdir -p "${HOME}/bin"
+    mkdir -p "${REPO_HOME}/bin"
 
-    local wrapper_src="${ROOT_DIR}/files/home/bin/claude"
-
-    if [[ -f "$wrapper_src" ]]; then
-        install -m 755 "$wrapper_src" "${HOME}/bin/claude"
-        ok "Wrapper задеплоен из репо: ~/bin/claude"
-    else
-        cat > "${HOME}/bin/claude" << 'EOF'
+    cat > "${REPO_HOME}/bin/claude" << 'WRAPPER'
 #!/bin/bash
+# Wrapper для Claude Code — проксирование через privoxy → SSH SOCKS5 туннель
+# Устанавливает HTTPS_PROXY только для этого процесса, не глобально
 export HTTPS_PROXY="http://127.0.0.1:8118"
-exec ~/.local/bin/claude "$@"
-EOF
-        chmod +x "${HOME}/bin/claude"
-        ok "Wrapper создан: ~/bin/claude"
-    fi
+exec "${HOME}/.local/bin/claude" "$@"
+WRAPPER
+    chmod 755 "${REPO_HOME}/bin/claude"
+    ok "Wrapper создан: ~/bin/claude"
 
-    if ! echo "$PATH" | grep -q "${HOME}/bin:"; then
+    if ! echo "$PATH" | grep -q "${REPO_HOME}/bin:"; then
         warn "~/bin не первый в PATH. Добавь в ~/.bashrc:"
         warn "  add_to_path \"\$HOME/bin\"  (должен быть ВЫШЕ ~/.local/bin)"
-        warn "Или перезапусти shell: source ~/.bashrc"
+        warn "Или: source ~/.bashrc"
     else
         ok "~/bin первый в PATH — wrapper будет найден раньше ~/.local/bin/claude"
     fi
@@ -125,11 +153,10 @@ EOF
 
 # --- Установка Claude Code ---
 install_claude_code() {
-    if command -v claude >/dev/null 2>&1 && [[ "$(command -v claude)" == "${HOME}/bin/claude" ]]; then
-        if [[ -x "${HOME}/.local/bin/claude" ]]; then
-            ok "Claude Code уже установлен: $(~/.local/bin/claude --version 2>/dev/null || echo 'версия недоступна')"
-            return
-        fi
+    if [[ -x "${REPO_HOME}/.local/bin/claude" ]]; then
+        ok "Claude Code уже установлен: \
+$(${REPO_HOME}/.local/bin/claude --version 2>/dev/null || echo 'версия недоступна')"
+        return
     fi
 
     log "Установка Claude Code через HTTPS_PROXY"
@@ -144,7 +171,8 @@ install_claude_code() {
     HTTPS_PROXY="http://127.0.0.1:8118" \
         curl -fsSL https://claude.ai/install.sh | bash
 
-    ok "Claude Code установлен: $(~/.local/bin/claude --version 2>/dev/null || echo 'ok')"
+    ok "Claude Code установлен: \
+$(${REPO_HOME}/.local/bin/claude --version 2>/dev/null || echo 'ok')"
 }
 
 # --- Финальная проверка ---
@@ -152,16 +180,20 @@ run_checks() {
     log "Проверка всей цепочки"
     local errors=0
 
-    command -v autossh >/dev/null 2>&1 && ok "autossh: установлен" \
+    command -v autossh >/dev/null 2>&1 \
+        && ok "autossh: установлен" \
         || { fail "autossh: не найден"; ((errors++)); }
 
-    systemctl is-active privoxy.service >/dev/null 2>&1 && ok "privoxy: active" \
+    systemctl is-active privoxy.service >/dev/null 2>&1 \
+        && ok "privoxy: active" \
         || { fail "privoxy: не запущен"; ((errors++)); }
 
-    systemctl is-active ssh-proxy.service >/dev/null 2>&1 && ok "ssh-proxy: active" \
+    systemctl is-active ssh-proxy.service >/dev/null 2>&1 \
+        && ok "ssh-proxy: active" \
         || { fail "ssh-proxy: не запущен"; ((errors++)); }
 
-    ss -tlnp | grep -q "8118" && ok "privoxy: слушает 127.0.0.1:8118" \
+    ss -tlnp | grep -q "8118" \
+        && ok "privoxy: слушает 127.0.0.1:8118" \
         || { fail "privoxy: порт 8118 не слушает"; ((errors++)); }
 
     if curl -s -x http://127.0.0.1:8118 https://api.anthropic.com/v1/models \
@@ -172,15 +204,17 @@ run_checks() {
         ((errors++))
     fi
 
-    [[ -x "${HOME}/bin/claude" ]] && ok "wrapper ~/bin/claude: существует" \
+    [[ -x "${REPO_HOME}/bin/claude" ]] \
+        && ok "wrapper ~/bin/claude: существует" \
         || { fail "wrapper ~/bin/claude: не найден"; ((errors++)); }
 
-    [[ -x "${HOME}/.local/bin/claude" ]] && ok "~/.local/bin/claude: установлен" \
-        || { warn "~/.local/bin/claude: не установлен — запусти без --check-only"; }
+    [[ -x "${REPO_HOME}/.local/bin/claude" ]] \
+        && ok "~/.local/bin/claude: установлен" \
+        || warn "~/.local/bin/claude: не установлен — запусти без --check-only"
 
     local which_claude
     which_claude=$(command -v claude 2>/dev/null || echo "не найден")
-    if [[ "$which_claude" == "${HOME}/bin/claude" ]]; then
+    if [[ "$which_claude" == "${REPO_HOME}/bin/claude" ]]; then
         ok "which claude → ~/bin/claude (wrapper подхвачен)"
     else
         warn "which claude → $which_claude (ожидался ~/bin/claude)"
@@ -199,6 +233,7 @@ run_checks() {
 # --- Main ---
 main() {
     echo "=== deploy-claude-proxy.sh ==="
+    echo "Пользователь: ${REPO_USER} | VPS: ${VPS_USER}@vps"
 
     check_vps_known
 
@@ -214,7 +249,7 @@ main() {
     install_claude_code
     run_checks
 
-    cat << 'EOF'
+    cat << EOF
 
 ========================================
 Claude Code установлен
@@ -224,7 +259,6 @@ Claude Code установлен
   claude
 
 При первом запуске Claude Code откроет URL для авторизации через браузер.
-Скопируй URL и открой в Chrome (через прокси или напрямую — оба варианта работают).
 
 Управление сервисами:
   systemctl status ssh-proxy.service    # состояние туннеля
@@ -235,7 +269,6 @@ Claude Code установлен
   HTTPS_PROXY="http://127.0.0.1:8118" claude update
 
 Повторная проверка:
-  ./deploy-claude-proxy.sh --check-only
   make claude-check
 
 EOF

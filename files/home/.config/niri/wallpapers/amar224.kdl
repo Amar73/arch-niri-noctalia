@@ -1,3 +1,11 @@
-// Обои — запуск через wrapper-скрипт ~/.local/bin/set-wallpapers
-// Деплоится автоматически deploy-outputs.sh по hostname
-spawn-at-startup "/home/amar/.local/bin/set-wallpapers"
+// =============================================================================
+// wallpapers/amar224.kdl — ШАБЛОН для deploy-outputs.sh
+//
+// Этот файл используется deploy-outputs.sh только для определения hostname'а.
+// Актуальный conf.d/45-wallpaper.kdl ГЕНЕРИРУЕТСЯ с реальными путями.
+// Не деплоится напрямую.
+//
+// Итоговый файл будет содержать:
+//   spawn-at-startup "~/.local/bin/set-wallpapers"
+// где set-wallpapers — скрипт с реальными путями к Wallpapers/
+// =============================================================================

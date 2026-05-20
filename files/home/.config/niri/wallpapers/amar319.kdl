@@ -1,4 +1,7 @@
-// Обои для amar319 — один процесс swaybg, два выхода
-// Деплоится автоматически deploy-outputs.sh по hostname
-
-spawn-at-startup "swaybg" "-o" "DVI-I-1" "-i" "/home/amar/Amar73/arch-niri/Wallpapers/arch.jpeg" "-m" "fill" "-o" "HDMI-A-1" "-i" "/home/amar/Amar73/arch-niri/Wallpapers/arch3.jpeg" "-m" "fill"
+// =============================================================================
+// wallpapers/amar319.kdl — ШАБЛОН для deploy-outputs.sh
+//
+// Этот файл используется deploy-outputs.sh только для определения hostname'а.
+// Актуальный conf.d/45-wallpaper.kdl ГЕНЕРИРУЕТСЯ с реальными путями.
+// Не деплоится напрямую.
+// =============================================================================

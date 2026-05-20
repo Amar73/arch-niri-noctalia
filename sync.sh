@@ -1,114 +1,185 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FILES_DIR="${ROOT_DIR}/files"
+# =============================================================================
+# sync.sh — синхронизация конфигов из репо в систему
+#
+# ВАЖНО: перед синхронизацией автоматически создаётся бэкап через backup.sh
+# Синхронизируются только конкретные поддиректории ~/.config/ — не весь каталог.
+# =============================================================================
 
-die() { printf '\n[ERROR] %s\n' "$*" >&2; exit 1; }
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${ROOT_DIR}/config.sh"
+
+FILES_DIR="${REPO_FILES}"
+
+die()  { printf '\n[ERROR] %s\n' "$*" >&2; exit 1; }
+log()  { printf '\n[%s] %s\n' "$(date +'%F %T')" "$*"; }
+ok()   { printf '[OK]   %s\n' "$*"; }
+warn() { printf '[WARN] %s\n' "$*"; }
 
 backup_if_exists() {
-  local path="$1"
-  if [[ -e "$path" && ! -L "$path" ]]; then
-    local stamp
-    stamp="$(date +%F-%H%M%S)"
-    cp -a "$path" "${path}.bak.${stamp}"
-  fi
+    local path="$1"
+    if [[ -e "$path" && ! -L "$path" ]]; then
+        local stamp; stamp="$(date +%F-%H%M%S)"
+        cp -a "$path" "${path}.bak.${stamp}"
+        ok "Бэкап: ${path}.bak.${stamp}"
+    fi
 }
 
-echo "[*] Sync /usr/local/bin/niri-start"
+# -----------------------------------------------------------------------------
+# Бэкап перед изменениями
+# -----------------------------------------------------------------------------
+log "Создание бэкапа перед синхронизацией"
+bash "${ROOT_DIR}/backup.sh"
+
+# -----------------------------------------------------------------------------
+# niri-start wrapper
+# -----------------------------------------------------------------------------
+log "Sync /usr/local/bin/niri-start"
 if [[ ! -f /usr/local/bin/niri-start ]]; then
-  sudo tee /usr/local/bin/niri-start > /dev/null << 'EOF'
+    sudo tee /usr/local/bin/niri-start > /dev/null << 'EOF'
 #!/bin/bash
 exec dbus-run-session niri
 EOF
-  sudo chmod +x /usr/local/bin/niri-start
-  echo "[OK] niri-start создан"
+    sudo chmod +x /usr/local/bin/niri-start
+    ok "niri-start создан"
 else
-  echo "[OK] niri-start уже существует"
+    ok "niri-start уже существует"
 fi
 
-echo "[*] Sync /etc/greetd"
+# -----------------------------------------------------------------------------
+# /etc/greetd
+# -----------------------------------------------------------------------------
+log "Sync /etc/greetd"
 sudo install -d -m 755 /etc/greetd
 sudo rsync -a --delete "${FILES_DIR}/etc/greetd/" /etc/greetd/
 
-# ИСПРАВЛЕНО v6.3: rsync --delete без проверки источника —
-# при пустом или несуществующем src выкашивает весь ~/.config.
-# Проверяем что src существует и не пуст перед деструктивной синхронизацией.
-echo "[*] Sync ~/.config"
+# -----------------------------------------------------------------------------
+# ~/.config — ТОЛЬКО конкретные директории (не весь ~/.config/)
+# -----------------------------------------------------------------------------
+log "Sync ~/.config (selective)"
 config_src="${FILES_DIR}/home/.config"
-[[ -d "$config_src" ]] \
-  || die "Директория конфигов не найдена: $config_src"
-[[ -n "$(ls -A "$config_src" 2>/dev/null)" ]] \
-  || die "Директория конфигов пуста: $config_src"
+config_dst="${REPO_HOME}/.config"
 
-mkdir -p "${HOME}/.config"
-rsync -a --delete "$config_src/" "${HOME}/.config/"
+[[ -d "$config_src" ]] || die "Директория конфигов не найдена: $config_src"
+mkdir -p "${config_dst}"
 
-echo "[*] Update alacritty themes"
-_themes_dir="${HOME}/.config/alacritty/themes"
-if [[ -d "$_themes_dir/.git" ]]; then
-  git -C "$_themes_dir" pull --ff-only && echo "[OK] alacritty-theme обновлены"
-else
-  mkdir -p "$_themes_dir"
-  git clone https://github.com/alacritty/alacritty-theme "$_themes_dir"
-  echo "[OK] alacritty-theme установлены"
-fi
-
-echo "[*] Sync ~/.bashrc and ~/.ssh/config"
-mkdir -p "$HOME/.ssh"
-chmod 700 "$HOME/.ssh"
-backup_if_exists "$HOME/.bashrc"
-backup_if_exists "$HOME/.ssh/config"
-install -m 644 "${FILES_DIR}/home/.bashrc" "$HOME/.bashrc"
-install -m 600 "${FILES_DIR}/home/.ssh/config" "$HOME/.ssh/config"
-
-echo "[*] Reload user units"
-systemctl --user daemon-reload
-
-echo "[*] Restart user services"
-for svc in waybar swayidle cliphist-text cliphist-images; do
-  if systemctl --user is-enabled "$svc.service" >/dev/null 2>&1; then
-    systemctl --user restart "$svc.service" \
-      && echo "[OK] restarted: $svc" \
-      || echo "[WARN] failed to restart: $svc"
-  fi
+sync_dirs=(niri waybar alacritty swaylock mako fuzzel mc qt6ct gtk-3.0 gtk-4.0 systemd)
+for dir in "${sync_dirs[@]}"; do
+    if [[ -d "${config_src}/${dir}" ]]; then
+        rsync -a --delete \
+            "${config_src}/${dir}/" \
+            "${config_dst}/${dir}/"
+        ok "Synced: ~/.config/${dir}"
+    fi
 done
 
-echo "[*] Check for failed units"
+# -----------------------------------------------------------------------------
+# alacritty themes
+# -----------------------------------------------------------------------------
+log "Update alacritty themes"
+_themes_dir="${config_dst}/alacritty/themes"
+if [[ -d "${_themes_dir}/.git" ]]; then
+    git -C "${_themes_dir}" pull --ff-only \
+        && ok "alacritty-theme обновлены" \
+        || warn "Не удалось обновить alacritty-theme"
+else
+    mkdir -p "${_themes_dir}"
+    git clone https://github.com/alacritty/alacritty-theme "${_themes_dir}" \
+        && ok "alacritty-theme установлены" \
+        || warn "Не удалось клонировать alacritty-theme"
+fi
+
+# -----------------------------------------------------------------------------
+# .bashrc и .ssh/config
+# -----------------------------------------------------------------------------
+log "Sync ~/.bashrc и ~/.ssh/config"
+mkdir -p "${REPO_HOME}/.ssh"
+chmod 700 "${REPO_HOME}/.ssh"
+backup_if_exists "${REPO_HOME}/.bashrc"
+backup_if_exists "${REPO_HOME}/.ssh/config"
+install -m 644 "${FILES_DIR}/home/.bashrc"     "${REPO_HOME}/.bashrc"
+install -m 600 "${FILES_DIR}/home/.ssh/config"  "${REPO_HOME}/.ssh/config"
+
+# -----------------------------------------------------------------------------
+# ~/bin/claude wrapper (генерируем с правильным HOME)
+# -----------------------------------------------------------------------------
+log "Sync ~/bin/claude wrapper"
+mkdir -p "${REPO_HOME}/bin"
+cat > "${REPO_HOME}/bin/claude" << EOF
+#!/bin/bash
+# Wrapper для Claude Code — проксирование через privoxy → SSH SOCKS5 туннель
+export HTTPS_PROXY="http://127.0.0.1:8118"
+exec "\${HOME}/.local/bin/claude" "\$@"
+EOF
+chmod 755 "${REPO_HOME}/bin/claude"
+ok "claude wrapper задеплоен"
+
+# -----------------------------------------------------------------------------
+# ~/.local/bin/set-wallpapers (генерируем с реальными путями)
+# -----------------------------------------------------------------------------
+log "Sync set-wallpapers"
+mkdir -p "${REPO_HOME}/.local/bin"
+local_wallpapers_path="${INSTALLED_REPO_PATH}/Wallpapers"
+cat > "${REPO_HOME}/.local/bin/set-wallpapers" << EOF
+#!/bin/bash
+# set-wallpapers — обои для amar224 (3 монитора DP-2, DP-3, DP-4)
+# Сгенерирован sync.sh для пользователя ${REPO_USER}
+pkill swaybg 2>/dev/null || true
+exec swaybg \\
+  -o DP-2 -i ${local_wallpapers_path}/arch.jpeg    -m fill \\
+  -o DP-3 -i ${local_wallpapers_path}/arch3.jpeg   -m fill \\
+  -o DP-4 -i ${local_wallpapers_path}/wallpaper.jpg -m fill
+EOF
+chmod 755 "${REPO_HOME}/.local/bin/set-wallpapers"
+ok "set-wallpapers сгенерирован"
+
+# -----------------------------------------------------------------------------
+# Перезагрузка user-юнитов и сервисов
+# -----------------------------------------------------------------------------
+log "Reload user units"
+systemctl --user daemon-reload
+
+log "Restart user services"
+for svc in waybar cliphist-text cliphist-images; do
+    if systemctl --user is-enabled "${svc}.service" >/dev/null 2>&1; then
+        systemctl --user restart "${svc}.service" \
+            && ok "restarted: $svc" \
+            || warn "failed to restart: $svc"
+    fi
+done
+
+# swayidle управляется через niri spawn-at-startup — не перезапускаем через systemd
+warn "swayidle управляется через niri spawn-at-startup. Для применения: make reload"
+
+# -----------------------------------------------------------------------------
+# Проверки
+# -----------------------------------------------------------------------------
+log "Check failed units"
 failed=$(systemctl --user --failed --no-legend 2>/dev/null | awk '{print $1}' | tr '\n' ' ')
 if [[ -n "$failed" ]]; then
-  echo "[WARN] Failed user units: $failed"
+    warn "Failed user units: $failed"
 else
-  echo "[OK] No failed user units"
+    ok "No failed user units"
 fi
 
-echo "[*] Validate niri config"
-niri validate || true
+log "Validate niri config"
+niri validate || warn "niri validate не прошёл — проверь конфиг"
 
-# set-wallpapers wrapper (amar224-specific)
-if [[ -f "${ROOT_DIR}/files/home/.local/bin/set-wallpapers" ]]; then
-  mkdir -p "${HOME}/.local/bin"
-  install -m 755 "${ROOT_DIR}/files/home/.local/bin/set-wallpapers" "${HOME}/.local/bin/set-wallpapers"
-  echo "[OK] set-wallpapers задеплоен"
-fi
+log "Validate bashrc"
+bash -n "${REPO_HOME}/.bashrc" && ok "bashrc: синтаксис OK"
 
-# Claude Code wrapper
-if [[ -f "${ROOT_DIR}/files/home/bin/claude" ]]; then
-    mkdir -p "${HOME}/bin"
-    install -m 755 "${ROOT_DIR}/files/home/bin/claude" "${HOME}/bin/claude"
-    echo "[OK] claude wrapper задеплоен"
-fi
+log "Validate ssh config"
+ssh -G github.com >/dev/null && ok "ssh config: валиден"
 
-echo "[*] Deploy outputs config"
+# -----------------------------------------------------------------------------
+# Deploy outputs, wallpapers, ssh config
+# -----------------------------------------------------------------------------
+log "Deploy outputs config"
 bash "${ROOT_DIR}/deploy-outputs.sh"
 
-echo "[*] Deploy ssh config"
+log "Deploy ssh config"
 bash "${ROOT_DIR}/deploy-ssh-config.sh"
 
-echo "[*] Validate bashrc"
-bash -n "$HOME/.bashrc"
-
-echo "[*] Validate ssh config"
-ssh -G github.com >/dev/null
-
-echo "[OK] Sync done"
+ok "=== Sync done ==="

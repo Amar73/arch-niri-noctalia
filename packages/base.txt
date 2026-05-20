@@ -2,8 +2,13 @@
 # packages/base.txt — базовые пакеты из официальных репозиториев Arch Linux
 # Общие для всех машин (рабочие станции + ноутбуки)
 #
+# ПРИМЕЧАНИЕ: список намеренно включает пакеты из make install.
+# Это позволяет использовать base.txt автономно на уже работающей системе.
+# pacman с --needed пропускает уже установленные пакеты.
+#
 # Установка:
-#   grep -v '^#' packages/base.txt | grep -v '^$' | xargs sudo pacman -S --needed
+#   make packages
+#   ./install-packages.sh base
 # =============================================================================
 
 # --- Wayland — стек и интеграция ---
@@ -43,7 +48,6 @@ papirus-icon-theme
 pipewire
 pipewire-alsa
 pipewire-pulse
-# pipewire-jack — конфликтует с jack2, раскомментировать если jack2 не установлен
 wireplumber
 alsa-utils
 pamixer
@@ -103,7 +107,7 @@ thunderbird-i18n-ru
 
 # --- Текстовые редакторы ---
 vim
-kate                           # Мощный редактор от KDE, активно поддерживается
+kate
 
 # --- Утилиты командной строки ---
 wget
